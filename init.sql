@@ -1,0 +1,14 @@
+-- 创建服务管理表
+CREATE TABLE IF NOT EXISTS services (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL COMMENT '服务名称',
+  url VARCHAR(500) NOT NULL COMMENT '服务地址',
+  username VARCHAR(255) DEFAULT NULL COMMENT '登录用户名',
+  password VARCHAR(255) DEFAULT NULL COMMENT '登录密码',
+  description TEXT COMMENT '服务介绍',
+  is_pinned BOOLEAN DEFAULT FALSE COMMENT '是否置顶',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  INDEX idx_name (name),
+  INDEX idx_pinned (is_pinned)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='服务管理表';
