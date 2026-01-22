@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Project } from '@/types/project';
-import { ChevronDown, ChevronRight, FolderGit2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, FolderGit2, Pin } from 'lucide-react';
 
 interface ProjectNavigationProps {
   currentProjectId: string;
@@ -92,6 +92,23 @@ export default function ProjectNavigation({ currentProjectId, onProjectChange }:
     onProjectChange(projectId);
   };
 
+  const handleTogglePin = async (e: React.MouseEvent, projectId: number, isPinned: boolean) => {
+    e.stopPropagation();
+    try {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'toggle-pin' }),
+      });
+
+      if (response.ok) {
+        await fetchProjects();
+      }
+    } catch (error) {
+      console.error('Failed to toggle pin:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-4">
@@ -153,26 +170,52 @@ export default function ProjectNavigation({ currentProjectId, onProjectChange }:
 
             {expandedTypes.has(typeKey) && (
               <div className="ml-6 mt-1 space-y-1">
-                {typeProjects.map((project) => (
-                  <button
-                    key={project.id}
-                    onClick={() => handleProjectClick(project.id)}
-                    className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-colors ${
-                      project.id.toString() === currentProjectId
-                        ? 'bg-indigo-100 text-indigo-700 font-medium'
-                        : 'text-gray-600 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className={`w-1.5 h-1.5 rounded-full ${
-                        project.id.toString() === currentProjectId
-                          ? 'bg-indigo-600'
-                          : 'bg-gray-300'
-                      }`} />
-                      <span className="truncate">{project.name}</span>
+                {typeProjects
+                  .sort((a, b) => {
+                    // Pinned projects first
+                    if (a.is_pinned && !b.is_pinned) return -1;
+                    if (!a.is_pinned && b.is_pinned) return 1;
+                    return 0;
+                  })
+                  .map((project) => (
+                    <div
+                      key={project.id}
+                      className="group relative"
+                    >
+                      <button
+                        onClick={() => handleProjectClick(project.id)}
+                        className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-colors ${
+                          project.id.toString() === currentProjectId
+                            ? 'bg-indigo-100 text-indigo-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          {project.is_pinned ? (
+                            <Pin className="w-3 h-3 text-yellow-500 fill-current flex-shrink-0" />
+                          ) : (
+                            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                              project.id.toString() === currentProjectId
+                                ? 'bg-indigo-600'
+                                : 'bg-gray-300'
+                            }`} />
+                          )}
+                          <span className="truncate flex-1">{project.name}</span>
+                        </div>
+                      </button>
+                      <button
+                        onClick={(e) => handleTogglePin(e, project.id, project.is_pinned || false)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 opacity-0 group-hover:opacity-100 hover:bg-white rounded transition-all"
+                        title={project.is_pinned ? '取消置顶' : '置顶'}
+                      >
+                        <Pin className={`w-3.5 h-3.5 ${
+                          project.is_pinned 
+                            ? 'text-yellow-500 fill-current' 
+                            : 'text-gray-400 hover:text-yellow-500'
+                        }`} />
+                      </button>
                     </div>
-                  </button>
-                ))}
+                  ))}
               </div>
             )}
           </div>
