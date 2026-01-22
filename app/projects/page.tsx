@@ -1,23 +1,41 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { Project } from '@/types/project';
-import { ArrowLeft } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Project, ProjectBasicInput } from '@/types/project';
+import { Plus } from 'lucide-react';
+import Header from '@/components/shared/Header';
 import ProjectBasicInfo from '@/components/projects/detail/ProjectBasicInfo';
 import ProjectDeviceInfo from '@/components/projects/detail/ProjectDeviceInfo';
 import ProjectMiddleware from '@/components/projects/detail/ProjectMiddleware';
 import ProjectResources from '@/components/projects/detail/ProjectResources';
 import ProjectPrompts from '@/components/projects/detail/ProjectPrompts';
 import ProjectNavigation from '@/components/projects/ProjectNavigation';
+import ProjectModal from '@/components/projects/ProjectModal';
+import { useProjects } from '@/hooks/useProjects';
 
-export default function ProjectDetailPage() {
-  const params = useParams();
+export default function ProjectsPage() {
   const router = useRouter();
-  const [currentProjectId, setCurrentProjectId] = useState<string>(params.id as string);
+  const { projects, loading: projectsLoading, fetchProjects } = useProjects();
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [project, setProject] = useState<Project | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const [showProjectModal, setShowProjectModal] = useState(false);
+  const [projectFormData, setProjectFormData] = useState<ProjectBasicInput>({
+    name: '',
+    project_type: '',
+    description: '',
+    project_url: '',
+  });
+
+  // 当项目列表加载完成后，自动选择第一个项目
+  useEffect(() => {
+    if (!projectsLoading && projects.length > 0 && !currentProjectId) {
+      handleProjectChange(projects[0].id);
+    }
+  }, [projectsLoading, projects, currentProjectId]);
 
   const fetchProject = async (projectId: string) => {
     try {
@@ -29,9 +47,6 @@ export default function ProjectDetailPage() {
       }
       const data = await response.json();
       setProject(data);
-      
-      // Update URL without page refresh
-      window.history.replaceState(null, '', `/projects/${projectId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : '加载失败');
     } finally {
@@ -39,17 +54,14 @@ export default function ProjectDetailPage() {
     }
   };
 
-  useEffect(() => {
-    if (currentProjectId) {
-      fetchProject(currentProjectId);
-    }
-  }, [currentProjectId]);
-
   const handleProjectChange = (projectId: number) => {
-    setCurrentProjectId(projectId.toString());
+    const id = projectId.toString();
+    setCurrentProjectId(id);
+    fetchProject(id);
   };
 
   const handleUpdateBasicInfo = async (data: Partial<Project>) => {
+    if (!currentProjectId) return;
     const response = await fetch(`/api/projects/${currentProjectId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -63,12 +75,10 @@ export default function ProjectDetailPage() {
   const getExtendedInfo = () => {
     if (!project?.extended_info) return { middleware: [], resources: [], prompts: [] };
     
-    // Handle if extended_info is already an object
     if (typeof project.extended_info === 'object') {
       return project.extended_info as any;
     }
     
-    // Handle if extended_info is a JSON string
     try {
       return JSON.parse(project.extended_info);
     } catch {
@@ -77,6 +87,7 @@ export default function ProjectDetailPage() {
   };
 
   const handleUpdateMiddleware = async (middleware: any[]) => {
+    if (!currentProjectId) return;
     const extendedInfo = getExtendedInfo();
     const response = await fetch(`/api/projects/${currentProjectId}/extended`, {
       method: 'PUT',
@@ -89,6 +100,7 @@ export default function ProjectDetailPage() {
   };
 
   const handleUpdateResources = async (resources: any[]) => {
+    if (!currentProjectId) return;
     const extendedInfo = getExtendedInfo();
     const response = await fetch(`/api/projects/${currentProjectId}/extended`, {
       method: 'PUT',
@@ -101,6 +113,7 @@ export default function ProjectDetailPage() {
   };
 
   const handleUpdatePrompts = async (prompts: any[]) => {
+    if (!currentProjectId) return;
     const extendedInfo = getExtendedInfo();
     const response = await fetch(`/api/projects/${currentProjectId}/extended`, {
       method: 'PUT',
@@ -110,6 +123,37 @@ export default function ProjectDetailPage() {
     if (response.ok) {
       await fetchProject(currentProjectId);
     }
+  };
+
+  const handleProjectSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(projectFormData),
+      });
+      
+      if (response.ok) {
+        const newProject = await response.json();
+        handleCloseProjectModal();
+        await fetchProjects();
+        setCurrentProjectId(newProject.id.toString());
+        await fetchProject(newProject.id.toString());
+      }
+    } catch (err) {
+      console.error('Failed to create project:', err);
+    }
+  };
+
+  const handleCloseProjectModal = () => {
+    setShowProjectModal(false);
+    setProjectFormData({
+      name: '',
+      project_type: '',
+      description: '',
+      project_url: '',
+    });
   };
 
   const renderHeader = () => {
@@ -123,6 +167,33 @@ export default function ProjectDetailPage() {
   };
 
   const renderContent = () => {
+    if (projectsLoading) {
+      return (
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">加载项目列表...</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (projects.length === 0) {
+      return (
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <p className="text-gray-600 mb-4">暂无项目</p>
+            <button
+              onClick={() => router.push('/')}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              返回服务管理
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     if (loading) {
       return (
         <div className="flex items-center justify-center py-20">
@@ -139,12 +210,6 @@ export default function ProjectDetailPage() {
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
             <p className="text-red-600 mb-4">{error || '项目不存在'}</p>
-            <button
-              onClick={() => router.push('/')}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              返回首页
-            </button>
           </div>
         </div>
       );
@@ -166,34 +231,46 @@ export default function ProjectDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-8">
-      <div className="max-w-7xl mx-auto">
+    <>
+      <Header>
         <button
-          onClick={() => router.push('/')}
-          className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 transition-colors mb-6"
+          onClick={() => setShowProjectModal(true)}
+          className="inline-flex items-center px-3 py-1.5 text-sm bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
         >
-          <ArrowLeft className="w-5 h-5" />
-          返回项目列表
+          <Plus className="w-4 h-4 mr-1.5" />
+          新建项目
         </button>
+      </Header>
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex gap-6">
+            <aside className="w-64 flex-shrink-0">
+              <ProjectNavigation 
+                currentProjectId={currentProjectId || ''} 
+                onProjectChange={handleProjectChange}
+              />
+            </aside>
 
-        <div className="flex gap-6">
-          <aside className="w-64 flex-shrink-0">
-            <ProjectNavigation 
-              currentProjectId={currentProjectId} 
-              onProjectChange={handleProjectChange}
-            />
-          </aside>
-
-          <main className="flex-1 min-w-0">
-            <div className="bg-white/60 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20">
-              <div className="p-8">
-                {renderHeader()}
-                {renderContent()}
+            <main className="flex-1 min-w-0">
+              <div className="bg-white/60 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20">
+                <div className="p-8">
+                  {renderHeader()}
+                  {renderContent()}
+                </div>
               </div>
-            </div>
-          </main>
+            </main>
+          </div>
         </div>
       </div>
-    </div>
+
+      <ProjectModal
+        show={showProjectModal}
+        editingProject={null}
+        formData={projectFormData}
+        onClose={handleCloseProjectModal}
+        onSubmit={handleProjectSubmit}
+        onChange={setProjectFormData}
+      />
+    </>
   );
 }
