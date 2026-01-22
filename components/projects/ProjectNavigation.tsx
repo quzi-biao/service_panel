@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Project } from '@/types/project';
-import { ChevronDown, ChevronRight, FolderGit2, Pin } from 'lucide-react';
+import { ChevronDown, ChevronRight, FolderGit2, Pin, Search, X } from 'lucide-react';
 
 interface ProjectNavigationProps {
   currentProjectId: string;
@@ -24,6 +24,7 @@ export default function ProjectNavigation({ currentProjectId, onProjectChange }:
   const [projectTypes, setProjectTypes] = useState<ProjectType[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchProjects();
@@ -68,7 +69,16 @@ export default function ProjectNavigation({ currentProjectId, onProjectChange }:
     return type ? type.name : '未分类';
   };
 
-  const projectsByType: ProjectsByType = projects.reduce((acc, project) => {
+  // Filter projects based on search query
+  const filteredProjects = projects.filter(project => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return project.name.toLowerCase().includes(query) ||
+           project.description?.toLowerCase().includes(query) ||
+           getTypeName(project.project_type).toLowerCase().includes(query);
+  });
+
+  const projectsByType: ProjectsByType = filteredProjects.reduce((acc, project) => {
     const typeKey = project.project_type?.toString() || 'uncategorized';
     const typeName = getTypeName(project.project_type);
     if (!acc[typeKey]) {
@@ -123,9 +133,29 @@ export default function ProjectNavigation({ currentProjectId, onProjectChange }:
 
   return (
     <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-4 sticky top-8">
-      <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+      <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-200">
         <FolderGit2 className="w-5 h-5 text-indigo-600" />
         <h2 className="text-lg font-semibold text-gray-800">项目导航</h2>
+      </div>
+
+      {/* Search Input */}
+      <div className="mb-3 relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="搜索项目..."
+          className="w-full pl-9 pr-9 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       <div className="space-y-1 max-h-[calc(100vh-200px)] overflow-y-auto">
@@ -225,6 +255,9 @@ export default function ProjectNavigation({ currentProjectId, onProjectChange }:
 
       {projects.length === 0 && (
         <p className="text-sm text-gray-500 text-center py-4">暂无项目</p>
+      )}
+      {projects.length > 0 && filteredProjects.length === 0 && (
+        <p className="text-sm text-gray-500 text-center py-4">未找到匹配的项目</p>
       )}
     </div>
   );
