@@ -1,11 +1,11 @@
 import { Project } from '@/types/project';
 import { Pin } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface ProjectGridProps {
   projects: Project[];
   filteredProjects: Project[];
   searchQuery: string;
-  onProjectClick: (url: string | null) => void;
   onContextMenu: (e: React.MouseEvent, project: Project) => void;
 }
 
@@ -13,9 +13,14 @@ export default function ProjectGrid({
   projects,
   filteredProjects,
   searchQuery,
-  onProjectClick,
   onContextMenu,
 }: ProjectGridProps) {
+  const router = useRouter();
+
+  const handleProjectClick = (projectId: number) => {
+    router.push(`/projects/${projectId}`);
+  };
+
   if (projects.length === 0) {
     return (
       <div className="text-center py-12 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg">
@@ -37,7 +42,7 @@ export default function ProjectGrid({
       {filteredProjects.map((project) => (
         <div
           key={project.id}
-          onClick={() => project.project_url && onProjectClick(project.project_url)}
+          onClick={() => handleProjectClick(project.id)}
           onContextMenu={(e) => onContextMenu(e, project)}
           className={`group bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 p-6 cursor-pointer flex flex-col border hover:border-indigo-200 transform hover:-translate-y-1 relative ${
             project.is_pinned ? 'border-yellow-300/50' : 'border-white/50'

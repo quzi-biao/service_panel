@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Service, ServiceInput } from '@/types/service';
 import { Project, ProjectBasicInput, ProjectExtendedInput } from '@/types/project';
 import { Plus } from 'lucide-react';
@@ -26,10 +26,26 @@ import ProjectTypeFilter from '@/components/projects/ProjectTypeFilter';
 
 type TabType = 'services' | 'projects';
 
+const TAB_CACHE_KEY = 'service-panel-active-tab';
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>('services');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProjectType, setSelectedProjectType] = useState<string | null>(null);
+
+  // 从 localStorage 恢复 tab 状态
+  useEffect(() => {
+    const cachedTab = localStorage.getItem(TAB_CACHE_KEY) as TabType | null;
+    if (cachedTab && (cachedTab === 'services' || cachedTab === 'projects')) {
+      setActiveTab(cachedTab);
+    }
+  }, []);
+
+  // 保存 tab 状态到 localStorage
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    localStorage.setItem(TAB_CACHE_KEY, tab);
+  };
 
   const {
     services,
@@ -333,7 +349,7 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
-            <TabSwitcher activeTab={activeTab} onTabChange={setActiveTab} />
+            <TabSwitcher activeTab={activeTab} onTabChange={handleTabChange} />
 
             <button
               onClick={() => activeTab === 'services' ? setShowServiceModal(true) : setShowProjectModal(true)}
@@ -372,7 +388,6 @@ export default function Home() {
               projects={projects}
               filteredProjects={filteredProjects}
               searchQuery={searchQuery}
-              onProjectClick={openProject}
               onContextMenu={openProjectContextMenu}
             />
           </>

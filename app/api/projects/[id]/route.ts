@@ -20,10 +20,26 @@ export async function GET(
       );
     }
 
+    // Fetch middleware
+    const [middlewareRows] = await pool.query<RowDataPacket[]>(
+      'SELECT * FROM project_middleware WHERE project_id = ? ORDER BY created_at',
+      [params.id]
+    );
+
+    // Fetch resources
+    const [resourceRows] = await pool.query<RowDataPacket[]>(
+      'SELECT * FROM project_resources WHERE project_id = ? ORDER BY created_at',
+      [params.id]
+    );
+
     const project = {
       ...rows[0],
       is_pinned: Boolean(rows[0].is_pinned),
-      service_urls: rows[0].service_urls ? JSON.parse(rows[0].service_urls) : null
+      service_urls: rows[0].service_urls ? JSON.parse(rows[0].service_urls) : null,
+      extended_info: {
+        middleware: middlewareRows,
+        resources: resourceRows
+      }
     };
 
     return NextResponse.json(project as Project);

@@ -15,10 +15,6 @@ export default function ProjectTypeFilter({
 }: ProjectTypeFilterProps) {
   return (
     <div className="mb-6">
-      <div className="flex items-center gap-2 mb-3">
-        <Layers className="w-5 h-5 text-indigo-600" />
-        <h3 className="text-sm font-semibold text-gray-700">项目类型</h3>
-      </div>
       <div className="flex flex-wrap gap-2">
         <button
           onClick={() => onTypeSelect(null)}
