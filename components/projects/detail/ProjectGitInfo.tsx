@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Project } from '@/types/project';
 import { Edit2, Save, X, Code, ExternalLink } from 'lucide-react';
 
@@ -15,6 +15,12 @@ export default function ProjectGitInfo({ project, onUpdate }: ProjectGitInfoProp
     project_url: project.project_url || '',
   });
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setFormData({
+      project_url: project.project_url || '',
+    });
+  }, [project]);
 
   const handleSave = async () => {
     setSaving(true);

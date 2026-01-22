@@ -146,7 +146,7 @@ export default function ProjectNavigation({ currentProjectId, onProjectChange }:
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="搜索项目..."
-          className="w-full pl-9 pr-9 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+          className="w-full pl-9 pr-9 py-2 text-sm text-gray-900 placeholder:text-gray-400 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
         />
         {searchQuery && (
           <button

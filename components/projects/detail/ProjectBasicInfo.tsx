@@ -30,6 +30,14 @@ export default function ProjectBasicInfo({ project, onUpdate }: ProjectBasicInfo
     fetchProjectTypes();
   }, []);
 
+  useEffect(() => {
+    setFormData({
+      name: project.name,
+      project_type: project.project_type,
+      description: project.description || '',
+    });
+  }, [project]);
+
   const fetchProjectTypes = async () => {
     try {
       const response = await fetch('/api/project-types');

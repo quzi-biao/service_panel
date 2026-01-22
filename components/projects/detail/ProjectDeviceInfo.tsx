@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Project } from '@/types/project';
 import { Edit2, Save, X, Server, ExternalLink, Terminal } from 'lucide-react';
 
@@ -19,6 +19,16 @@ export default function ProjectDeviceInfo({ project, onUpdate }: ProjectDeviceIn
     service_urls: project.service_urls || '',
   });
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setFormData({
+      project_url: project.project_url || '',
+      dev_device_name: project.dev_device_name || '',
+      dev_device_path: project.dev_device_path || '',
+      deploy_server: project.deploy_server || '',
+      service_urls: project.service_urls || '',
+    });
+  }, [project]);
 
   const handleSave = async () => {
     setSaving(true);
