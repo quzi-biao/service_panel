@@ -22,12 +22,14 @@ import ProjectModal from '@/components/projects/ProjectModal';
 import ProjectExtendedModal from '@/components/projects/ProjectExtendedModal';
 import ProjectDetailModal from '@/components/projects/ProjectDetailModal';
 import ProjectContextMenu from '@/components/projects/ProjectContextMenu';
+import ProjectTypeFilter from '@/components/projects/ProjectTypeFilter';
 
 type TabType = 'services' | 'projects';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>('services');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedProjectType, setSelectedProjectType] = useState<string | null>(null);
 
   const {
     services,
@@ -79,6 +81,7 @@ export default function Home() {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [projectFormData, setProjectFormData] = useState<ProjectBasicInput>({
     name: '',
+    project_type: '',
     description: '',
     project_url: '',
     dev_device_name: '',
@@ -160,6 +163,7 @@ export default function Home() {
     setEditingProject(null);
     setProjectFormData({
       name: '',
+      project_type: '',
       description: '',
       project_url: '',
       dev_device_name: '',
@@ -173,6 +177,7 @@ export default function Home() {
     setEditingProject(project);
     setProjectFormData({
       name: project.name,
+      project_type: project.project_type,
       description: project.description || '',
       project_url: project.project_url || '',
       dev_device_name: project.dev_device_name || '',
@@ -295,12 +300,20 @@ export default function Home() {
 
   const filteredProjects = projects.filter((project) => {
     const query = searchQuery.toLowerCase();
-    return (
+    const matchesSearch = (
       project.name.toLowerCase().includes(query) ||
       (project.description && project.description.toLowerCase().includes(query)) ||
       (project.project_url && project.project_url.toLowerCase().includes(query))
     );
+    const matchesType = selectedProjectType === null || project.project_type === selectedProjectType;
+    return matchesSearch && matchesType;
   });
+
+  const projectTypes = Array.from(new Set(projects.map(p => p.project_type))).sort();
+  const projectTypeCounts = projects.reduce((acc, project) => {
+    acc[project.project_type] = (acc[project.project_type] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
   const loading = servicesLoading || projectsLoading;
 
@@ -348,13 +361,21 @@ export default function Home() {
         )}
 
         {activeTab === 'projects' && (
-          <ProjectGrid
-            projects={projects}
-            filteredProjects={filteredProjects}
-            searchQuery={searchQuery}
-            onProjectClick={openProject}
-            onContextMenu={openProjectContextMenu}
-          />
+          <>
+            <ProjectTypeFilter
+              projectTypes={projectTypes}
+              selectedType={selectedProjectType}
+              onTypeSelect={setSelectedProjectType}
+              projectCounts={projectTypeCounts}
+            />
+            <ProjectGrid
+              projects={projects}
+              filteredProjects={filteredProjects}
+              searchQuery={searchQuery}
+              onProjectClick={openProject}
+              onContextMenu={openProjectContextMenu}
+            />
+          </>
         )}
 
         <ServiceModal

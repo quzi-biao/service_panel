@@ -49,6 +49,11 @@ export default function ProjectGrid({
               置顶
             </div>
           )}
+          <div className="mb-2">
+            <span className="inline-block px-2 py-1 text-xs font-medium bg-indigo-100 text-indigo-700 rounded-md">
+              {project.project_type}
+            </span>
+          </div>
           <h3 className="text-xl font-semibold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-3 group-hover:from-indigo-600 group-hover:to-purple-600 transition-all pr-16">
             {project.name}
           </h3>

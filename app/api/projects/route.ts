@@ -27,9 +27,9 @@ export async function POST(request: NextRequest) {
   try {
     const body: ProjectBasicInput = await request.json();
     
-    if (!body.name) {
+    if (!body.name || !body.project_type) {
       return NextResponse.json(
-        { error: 'Name is required' },
+        { error: 'Name and project type are required' },
         { status: 400 }
       );
     }
@@ -37,10 +37,11 @@ export async function POST(request: NextRequest) {
     const serviceUrlsJson = body.service_urls ? JSON.stringify(body.service_urls) : null;
 
     const [result] = await pool.query<ResultSetHeader>(
-      `INSERT INTO projects (name, description, project_url, dev_device_name, dev_device_path, deploy_server, service_urls) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO projects (name, project_type, description, project_url, dev_device_name, dev_device_path, deploy_server, service_urls) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         body.name,
+        body.project_type,
         body.description || null,
         body.project_url || null,
         body.dev_device_name || null,

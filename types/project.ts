@@ -26,6 +26,7 @@ export interface ProjectPrompt {
 export interface Project {
   id: number;
   name: string;
+  project_type: string;
   description: string | null;
   project_url: string | null;
   dev_device_name: string | null;
@@ -43,12 +44,20 @@ export interface Project {
 
 export interface ProjectBasicInput {
   name: string;
+  project_type: string;
   description?: string;
   project_url?: string;
   dev_device_name?: string;
   dev_device_path?: string;
   deploy_server?: string;
   service_urls?: string[];
+}
+
+export interface ProjectCreateInput {
+  name: string;
+  project_type: string;
+  description?: string;
+  project_url?: string;
 }
 
 export interface ProjectExtendedInput {

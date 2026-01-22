@@ -43,9 +43,9 @@ export async function PUT(
   try {
     const body: ProjectBasicInput = await request.json();
 
-    if (!body.name) {
+    if (!body.name || !body.project_type) {
       return NextResponse.json(
-        { error: 'Name is required' },
+        { error: 'Name and project type are required' },
         { status: 400 }
       );
     }
@@ -54,11 +54,12 @@ export async function PUT(
 
     await pool.query<ResultSetHeader>(
       `UPDATE projects 
-       SET name = ?, description = ?, project_url = ?, dev_device_name = ?, 
+       SET name = ?, project_type = ?, description = ?, project_url = ?, dev_device_name = ?, 
            dev_device_path = ?, deploy_server = ?, service_urls = ?
        WHERE id = ?`,
       [
         body.name,
+        body.project_type,
         body.description || null,
         body.project_url || null,
         body.dev_device_name || null,
