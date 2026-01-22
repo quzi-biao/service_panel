@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Project, ProjectBasicInput } from '@/types/project';
-import { Plus } from 'lucide-react';
+import { Plus, Settings } from 'lucide-react';
 import Header from '@/components/shared/Header';
 import ProjectBasicInfo from '@/components/projects/detail/ProjectBasicInfo';
 import ProjectDeviceInfo from '@/components/projects/detail/ProjectDeviceInfo';
@@ -12,6 +12,7 @@ import ProjectResources from '@/components/projects/detail/ProjectResources';
 import ProjectPrompts from '@/components/projects/detail/ProjectPrompts';
 import ProjectNavigation from '@/components/projects/ProjectNavigation';
 import ProjectModal from '@/components/projects/ProjectModal';
+import ProjectTypeManagement from '@/components/projects/ProjectTypeManagement';
 import { useProjects } from '@/hooks/useProjects';
 
 export default function ProjectsPage() {
@@ -23,6 +24,7 @@ export default function ProjectsPage() {
   const [error, setError] = useState<string | null>(null);
   
   const [showProjectModal, setShowProjectModal] = useState(false);
+  const [showTypeManagement, setShowTypeManagement] = useState(false);
   const [projectFormData, setProjectFormData] = useState<ProjectBasicInput>({
     name: '',
     project_type: '',
@@ -233,13 +235,22 @@ export default function ProjectsPage() {
   return (
     <>
       <Header>
-        <button
-          onClick={() => setShowProjectModal(true)}
-          className="inline-flex items-center px-3 py-1.5 text-sm bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
-        >
-          <Plus className="w-4 h-4 mr-1.5" />
-          新建项目
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowProjectModal(true)}
+            className="inline-flex items-center px-3 py-1.5 text-sm bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
+          >
+            <Plus className="w-4 h-4 mr-1.5" />
+            新建项目
+          </button>
+          <button
+            onClick={() => setShowTypeManagement(true)}
+            className="inline-flex items-center px-3 py-1.5 text-sm bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-all shadow-md hover:shadow-lg"
+            title="类型管理"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
+        </div>
       </Header>
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-8">
         <div className="max-w-7xl mx-auto">
@@ -270,6 +281,12 @@ export default function ProjectsPage() {
         onClose={handleCloseProjectModal}
         onSubmit={handleProjectSubmit}
         onChange={setProjectFormData}
+      />
+
+      <ProjectTypeManagement
+        show={showTypeManagement}
+        onClose={() => setShowTypeManagement(false)}
+        onTypesUpdated={() => {}}
       />
     </>
   );

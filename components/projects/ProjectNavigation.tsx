@@ -13,13 +13,21 @@ interface ProjectsByType {
   [key: string]: Project[];
 }
 
+interface ProjectType {
+  id: number;
+  name: string;
+  sort_order: number;
+}
+
 export default function ProjectNavigation({ currentProjectId, onProjectChange }: ProjectNavigationProps) {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [projectTypes, setProjectTypes] = useState<ProjectType[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchProjects();
+    fetchProjectTypes();
   }, []);
 
   const fetchProjects = async () => {
@@ -32,7 +40,7 @@ export default function ProjectNavigation({ currentProjectId, onProjectChange }:
         // Auto-expand the type of current project
         const currentProject = data.find((p: Project) => p.id.toString() === currentProjectId);
         if (currentProject) {
-          setExpandedTypes(new Set([currentProject.project_type]));
+          setExpandedTypes(new Set([currentProject.project_type?.toString() || '']));
         }
       }
     } catch (error) {
@@ -42,12 +50,31 @@ export default function ProjectNavigation({ currentProjectId, onProjectChange }:
     }
   };
 
-  const projectsByType: ProjectsByType = projects.reduce((acc, project) => {
-    const type = project.project_type || '未分类';
-    if (!acc[type]) {
-      acc[type] = [];
+  const fetchProjectTypes = async () => {
+    try {
+      const response = await fetch('/api/project-types');
+      if (response.ok) {
+        const data = await response.json();
+        setProjectTypes(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch project types:', error);
     }
-    acc[type].push(project);
+  };
+
+  const getTypeName = (typeId: string | number | null): string => {
+    if (!typeId) return '未分类';
+    const type = projectTypes.find(t => t.id.toString() === typeId.toString());
+    return type ? type.name : '未分类';
+  };
+
+  const projectsByType: ProjectsByType = projects.reduce((acc, project) => {
+    const typeKey = project.project_type?.toString() || 'uncategorized';
+    const typeName = getTypeName(project.project_type);
+    if (!acc[typeKey]) {
+      acc[typeKey] = [];
+    }
+    acc[typeKey].push(project);
     return acc;
   }, {} as ProjectsByType);
 
@@ -85,24 +112,46 @@ export default function ProjectNavigation({ currentProjectId, onProjectChange }:
       </div>
 
       <div className="space-y-1 max-h-[calc(100vh-200px)] overflow-y-auto">
-        {Object.entries(projectsByType).sort(([a], [b]) => a.localeCompare(b)).map(([type, typeProjects]) => (
-          <div key={type}>
-            <button
-              onClick={() => toggleType(type)}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-indigo-50 rounded-lg transition-colors"
-            >
-              {expandedTypes.has(type) ? (
-                <ChevronDown className="w-4 h-4 text-gray-500" />
-              ) : (
-                <ChevronRight className="w-4 h-4 text-gray-500" />
-              )}
-              <span className="flex-1 text-left">{type}</span>
-              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                {typeProjects.length}
-              </span>
-            </button>
+        {Object.entries(projectsByType)
+          .sort(([aKey], [bKey]) => {
+            // Get type objects to access sort_order
+            const aType = projectTypes.find(t => t.id.toString() === aKey);
+            const bType = projectTypes.find(t => t.id.toString() === bKey);
+            
+            // Uncategorized goes last
+            if (aKey === 'uncategorized') return 1;
+            if (bKey === 'uncategorized') return -1;
+            
+            // Sort by sort_order if both types exist
+            if (aType && bType) {
+              return aType.sort_order - bType.sort_order;
+            }
+            
+            // Fallback to alphabetical by name
+            const aName = getTypeName(aKey);
+            const bName = getTypeName(bKey);
+            return aName.localeCompare(bName);
+          })
+          .map(([typeKey, typeProjects]) => {
+            const typeName = getTypeName(typeKey === 'uncategorized' ? null : typeKey);
+            return (
+              <div key={typeKey}>
+                <button
+                  onClick={() => toggleType(typeKey)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-indigo-50 rounded-lg transition-colors"
+                >
+                  {expandedTypes.has(typeKey) ? (
+                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-gray-500" />
+                  )}
+                  <span className="flex-1 text-left">{typeName}</span>
+                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                    {typeProjects.length}
+                  </span>
+                </button>
 
-            {expandedTypes.has(type) && (
+            {expandedTypes.has(typeKey) && (
               <div className="ml-6 mt-1 space-y-1">
                 {typeProjects.map((project) => (
                   <button
@@ -127,7 +176,8 @@ export default function ProjectNavigation({ currentProjectId, onProjectChange }:
               </div>
             )}
           </div>
-        ))}
+        );
+        })}
       </div>
 
       {projects.length === 0 && (

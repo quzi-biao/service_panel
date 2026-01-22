@@ -1,8 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Project } from '@/types/project';
 import { Edit2, Save, X, Pin, Calendar } from 'lucide-react';
+import ProjectTypeSelect from '../ProjectTypeSelect';
+
+interface ProjectType {
+  id: number;
+  name: string;
+  sort_order: number;
+}
 
 interface ProjectBasicInfoProps {
   project: Project;
@@ -17,6 +24,29 @@ export default function ProjectBasicInfo({ project, onUpdate }: ProjectBasicInfo
     description: project.description || '',
   });
   const [saving, setSaving] = useState(false);
+  const [projectTypes, setProjectTypes] = useState<ProjectType[]>([]);
+
+  useEffect(() => {
+    fetchProjectTypes();
+  }, []);
+
+  const fetchProjectTypes = async () => {
+    try {
+      const response = await fetch('/api/project-types');
+      if (response.ok) {
+        const data = await response.json();
+        setProjectTypes(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch project types:', error);
+    }
+  };
+
+  const getTypeName = (typeId: string | number | null): string => {
+    if (!typeId) return '未分类';
+    const type = projectTypes.find(t => t.id.toString() === typeId.toString());
+    return type ? type.name : '未分类';
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -56,11 +86,10 @@ export default function ProjectBasicInfo({ project, onUpdate }: ProjectBasicInfo
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">项目类型</label>
-                <input
-                  type="text"
+                <ProjectTypeSelect
                   value={formData.project_type}
-                  onChange={(e) => setFormData({ ...formData, project_type: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
+                  onChange={(typeId) => setFormData({ ...formData, project_type: typeId.toString() })}
+                  placeholder="请选择项目类型"
                 />
               </div>
               <div>
@@ -106,7 +135,7 @@ export default function ProjectBasicInfo({ project, onUpdate }: ProjectBasicInfo
               </div>
               <div className="flex items-center gap-2 mb-3">
                 <span className="inline-block px-2 py-1 text-xs font-medium bg-indigo-100 text-indigo-700 rounded-lg">
-                  {project.project_type}
+                  {getTypeName(project.project_type)}
                 </span>
               </div>
               {project.description && (
@@ -118,10 +147,10 @@ export default function ProjectBasicInfo({ project, onUpdate }: ProjectBasicInfo
         {!isEditing && (
           <button
             onClick={() => setIsEditing(true)}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+            className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+            title="编辑"
           >
             <Edit2 className="w-4 h-4" />
-            编辑
           </button>
         )}
       </div>

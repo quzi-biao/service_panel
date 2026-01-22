@@ -53,10 +53,10 @@ export default function ProjectDeviceInfo({ project, onUpdate }: ProjectDeviceIn
         {!isEditing && (
           <button
             onClick={() => setIsEditing(true)}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+            className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+            title="编辑"
           >
             <Edit2 className="w-4 h-4" />
-            编辑
           </button>
         )}
       </div>
@@ -141,10 +141,9 @@ export default function ProjectDeviceInfo({ project, onUpdate }: ProjectDeviceIn
                 href={project.project_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 break-all group text-sm"
+                className="text-indigo-600 hover:text-indigo-700 break-all text-sm"
               >
-                <span className="flex-1">{project.project_url}</span>
-                <ExternalLink className="w-4 h-4 flex-shrink-0 group-hover:translate-x-1 transition-transform" />
+                {project.project_url}
               </a>
             </div>
           )}

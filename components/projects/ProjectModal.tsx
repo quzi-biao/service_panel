@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Project, ProjectBasicInput } from '@/types/project';
 import { X } from 'lucide-react';
+import ProjectTypeSelect from './ProjectTypeSelect';
 
 interface ProjectModalProps {
   show: boolean;
@@ -18,6 +20,7 @@ export default function ProjectModal({
   onSubmit,
   onChange,
 }: ProjectModalProps) {
+
   if (!show) return null;
 
   return (
@@ -55,19 +58,11 @@ export default function ProjectModal({
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 项目类型 <span className="text-red-500">*</span>
               </label>
-              <select
-                required
+              <ProjectTypeSelect
                 value={formData.project_type}
-                onChange={(e) => onChange({ ...formData, project_type: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900"
-              >
-                <option value="">请选择项目类型</option>
-                <option value="web">Web应用</option>
-                <option value="mobile">移动应用</option>
-                <option value="backend">后端服务</option>
-                <option value="desktop">桌面应用</option>
-                <option value="other">其他</option>
-              </select>
+                onChange={(typeId) => onChange({ ...formData, project_type: typeId.toString() })}
+                placeholder="请选择项目类型"
+              />
             </div>
 
             <div>
