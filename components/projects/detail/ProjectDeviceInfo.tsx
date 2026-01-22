@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Project } from '@/types/project';
-import { Edit2, Save, X, Server, ExternalLink } from 'lucide-react';
+import { Edit2, Save, X, Server, ExternalLink, Terminal } from 'lucide-react';
 
 interface ProjectDeviceInfoProps {
   project: Project;
@@ -41,6 +41,23 @@ export default function ProjectDeviceInfo({ project, onUpdate }: ProjectDeviceIn
       service_urls: project.service_urls || '',
     });
     setIsEditing(false);
+  };
+
+  const handleOpenInTerminal = async (path: string) => {
+    try {
+      const response = await fetch('/api/open-terminal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path }),
+      });
+      
+      if (!response.ok) {
+        alert('打开终端失败');
+      }
+    } catch (error) {
+      console.error('Failed to open terminal:', error);
+      alert('打开终端失败');
+    }
   };
 
   return (
@@ -147,18 +164,22 @@ export default function ProjectDeviceInfo({ project, onUpdate }: ProjectDeviceIn
               </a>
             </div>
           )}
-          {project.dev_device_name && (
-            <div>
-              <p className="text-xs text-gray-500 mb-1">设备名称</p>
-              <p className="text-sm font-medium text-gray-800">{project.dev_device_name}</p>
-            </div>
-          )}
           {project.dev_device_path && (
             <div>
-              <p className="text-xs text-gray-500 mb-1">本地路径</p>
-              <p className="text-sm font-mono text-gray-700 bg-gray-50 px-3 py-2 rounded-lg break-all">
-                {project.dev_device_path}
+              <p className="text-xs text-gray-500 mb-1">
+                本地路径
+                {project.dev_device_name && (
+                  <span className="ml-1 text-gray-400">({project.dev_device_name})</span>
+                )}
               </p>
+              <button
+                onClick={() => handleOpenInTerminal(project.dev_device_path!)}
+                className="w-full text-left text-xs font-mono text-gray-700 bg-gray-50 hover:bg-indigo-50 px-3 py-2 rounded-lg break-all transition-colors group flex items-center gap-2"
+                title="点击在终端中打开"
+              >
+                <Terminal className="w-3.5 h-3.5 text-gray-400 group-hover:text-indigo-600 flex-shrink-0" />
+                <span className="flex-1">{project.dev_device_path}</span>
+              </button>
             </div>
           )}
           {project.deploy_server && (
