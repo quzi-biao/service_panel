@@ -290,7 +290,7 @@ export default function ProjectFilesPage() {
             <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
           </div>
         ) : (
-          <div className="grid grid-cols-12 gap-4 h-[calc(100vh-140px)]">
+          <div className="grid grid-cols-12 gap-4 h-[calc(100vh-100px)]">
             <FileTreeNavigation
               tree={tree}
               selectedFile={selectedFile}

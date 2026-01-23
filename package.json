@@ -30,36 +30,46 @@
     },
     "mac": {
       "category": "public.app-category.developer-tools",
-      "target": ["dmg", "zip"],
+      "target": [
+        "dmg",
+        "zip"
+      ],
       "identity": null
     },
     "win": {
-      "target": ["nsis", "portable"]
+      "target": [
+        "nsis",
+        "portable"
+      ]
     },
     "linux": {
-      "target": ["AppImage", "deb"]
+      "target": [
+        "AppImage",
+        "deb"
+      ]
     }
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "lucide-react": "^0.344.0",
+    "mysql2": "^3.9.0",
     "next": "14.2.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "mysql2": "^3.9.0",
-    "bcryptjs": "^2.4.3",
-    "lucide-react": "^0.344.0"
+    "react-syntax-highlighter": "^16.1.0"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "@types/bcryptjs": "^2.4.6",
-    "typescript": "^5",
     "autoprefixer": "^10.4.18",
-    "postcss": "^8.4.35",
-    "tailwindcss": "^3.4.1",
+    "concurrently": "^8.2.2",
     "electron": "^28.0.0",
     "electron-builder": "^24.9.1",
-    "concurrently": "^8.2.2",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5",
     "wait-on": "^7.2.0"
   }
 }
