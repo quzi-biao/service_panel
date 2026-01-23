@@ -3,7 +3,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/shared/Header';
-import { ArrowLeft, RefreshCw, Loader2 } from 'lucide-react';
+import FileContentViewer from '@/components/projects/detail/FileContentViewer';
+import { ArrowLeft, RefreshCw, Loader2, X } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -17,6 +18,18 @@ interface GraphNode {
   id: string;
   label: string;
   filePath: string;
+}
+
+interface ProjectFile {
+  id: number;
+  project_id: number;
+  file_path: string;
+  file_name: string;
+  file_size: number;
+  file_type: string;
+  file_md5: string | null;
+  is_directory: boolean;
+  parent_path: string | null;
 }
 
 interface GraphLink {
@@ -35,6 +48,10 @@ export default function FileGraphPage() {
   const [building, setBuilding] = useState(false);
   const [graphData, setGraphData] = useState<{ nodes: GraphNode[]; links: GraphLink[] } | null>(null);
   const [chartInstance, setChartInstance] = useState<any>(null);
+  const [selectedFile, setSelectedFile] = useState<ProjectFile | null>(null);
+  const [fileContent, setFileContent] = useState<string>('');
+  const [loadingContent, setLoadingContent] = useState(false);
+  const [showSidePanel, setShowSidePanel] = useState(false);
 
   useEffect(() => {
     loadGraphData();
@@ -88,6 +105,39 @@ export default function FileGraphPage() {
       alert('构建失败: ' + (error instanceof Error ? error.message : '未知错误'));
     } finally {
       setBuilding(false);
+    }
+  };
+
+  const fetchFileContent = async (fileId: string, nodeData: GraphNode) => {
+    try {
+      setLoadingContent(true);
+      const response = await fetch(`/api/projects/${projectId}/files/${fileId}/content`);
+      const data = await response.json();
+
+      if (data.content) {
+        setFileContent(data.content);
+      } else if (data.error) {
+        setFileContent(`错误: ${data.error}`);
+      }
+
+      // Convert GraphNode to ProjectFile format for FileContentViewer
+      const projectFile: ProjectFile = {
+        id: parseInt(fileId),
+        project_id: parseInt(projectId),
+        file_path: nodeData.filePath,
+        file_name: nodeData.label,
+        file_size: 0,
+        file_type: nodeData.label.split('.').pop() || '',
+        file_md5: null,
+        is_directory: false,
+        parent_path: nodeData.filePath.split('/').slice(0, -1).join('/') || null,
+      };
+      setSelectedFile(projectFile);
+    } catch (error) {
+      console.error('Error fetching file content:', error);
+      setFileContent('加载文件内容失败');
+    } finally {
+      setLoadingContent(false);
     }
   };
 
@@ -199,8 +249,11 @@ export default function FileGraphPage() {
         events: {
           onClick: (event: any) => {
             try {
-              if (event && event.clickNode && event.clickNode.data) {
-                console.log('Clicked node:', event.clickNode.data);
+              if (event && event.clickNode && event.clickNode.data && event.clickNode.data.data) {
+                const nodeData = event.clickNode.data.data;
+                console.log('Clicked node:', nodeData);
+                setShowSidePanel(true);
+                fetchFileContent(nodeData.id, nodeData);
               }
             } catch (error) {
               console.error('Error handling click event:', error);
@@ -282,16 +335,34 @@ export default function FileGraphPage() {
             <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
           </div>
         ) : graphData && graphData.nodes.length > 0 ? (
-          <div className="bg-white rounded-lg shadow p-4">
-            <div className="mb-4">
-              <p className="text-sm text-gray-600">
-                节点数: {graphData.nodes.length} | 关系数: {graphData.links.length}
-              </p>
+          <div className="flex gap-4">
+            <div className={`bg-white rounded-lg shadow p-4 transition-all duration-300 ${showSidePanel ? 'w-2/3' : 'w-full'}`}>
+              <div className="mb-4">
+                <p className="text-sm text-gray-600">
+                  节点数: {graphData.nodes.length} | 关系数: {graphData.links.length}
+                </p>
+              </div>
+              <div ref={chartRef} className="w-full overflow-hidden" style={{ height: 'calc(100vh - 190px)' }} />
             </div>
-            <div ref={chartRef} className="w-full overflow-hidden" style={{ height: 'calc(100vh - 160px)' }} />
+
+            {showSidePanel && (
+              <div className="w-1/3" style={{ height: 'calc(100vh - 120px)' }}>
+                <FileContentViewer
+                  selectedFile={selectedFile}
+                  fileContent={fileContent}
+                  loadingContent={loadingContent}
+                  showCloseButton={true}
+                  onClose={() => {
+                    setShowSidePanel(false);
+                    setSelectedFile(null);
+                    setFileContent('');
+                  }}
+                />
+              </div>
+            )}
           </div>
         ) : (
-          <div className="flex items-center justify-center h-[calc(100vh-150px)]">
+          <div className="flex items-center justify-center h-[calc(100vh-160px)]">
             <div className="text-center">
               <p className="text-gray-500 mb-4">暂无图谱数据</p>
               <button

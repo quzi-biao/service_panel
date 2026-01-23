@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { File, Loader2, Palette } from 'lucide-react';
+import { File, Loader2, Palette, X } from 'lucide-react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { 
   vscDarkPlus,
@@ -32,6 +32,8 @@ interface FileContentViewerProps {
   selectedFile: ProjectFile | null;
   fileContent: string;
   loadingContent: boolean;
+  showCloseButton?: boolean;
+  onClose?: () => void;
 }
 
 // 根据文件扩展名获取语言类型
@@ -133,6 +135,8 @@ export default function FileContentViewer({
   selectedFile,
   fileContent,
   loadingContent,
+  showCloseButton = false,
+  onClose,
 }: FileContentViewerProps) {
   const language = selectedFile ? getLanguageFromExtension(selectedFile.file_name) : 'text';
   const [selectedTheme, setSelectedTheme] = useState<keyof typeof themes>('VS Light');
@@ -154,7 +158,8 @@ export default function FileContentViewer({
                   </p>
                 )}
               </div>
-              <div className="relative ml-4">
+              <div className="flex items-center gap-2 ml-4">
+                <div className="relative">
                 <button
                   onClick={() => setShowThemeSelector(!showThemeSelector)}
                   className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
@@ -179,6 +184,16 @@ export default function FileContentViewer({
                       </button>
                     ))}
                   </div>
+                )}
+                </div>
+                {showCloseButton && onClose && (
+                  <button
+                    onClick={onClose}
+                    className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+                    title="关闭"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 )}
               </div>
             </div>
