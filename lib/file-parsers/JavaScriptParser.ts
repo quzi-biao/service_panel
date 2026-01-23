@@ -80,6 +80,30 @@ export class JavaScriptParser implements FileParser {
           });
         }
       }
+
+      // Image file references in src attributes (img, Image, etc.)
+      // Matches: src="/path/to/image.png", src='/path/to/image.jpg', src={"/path/to/image.svg"}
+      const srcMatches = line.matchAll(/src\s*=\s*[{]?\s*['"]([^'"]+\.(png|jpg|jpeg|gif|svg|webp|ico|bmp))['"]\s*[}]?/gi);
+      for (const srcMatch of srcMatches) {
+        const imagePath = srcMatch[1];
+        relations.push({
+          targetFile: this.resolveImportPath(imagePath, filePath),
+          relationType: 'IMPORTS_IMAGE',
+          lineNumber: index + 1,
+        });
+      }
+
+      // Background image references in style attributes
+      // Matches: backgroundImage: "url('/path/to/image.png')", background: url('/path/to/image.jpg')
+      const bgImageMatches = line.matchAll(/(?:background-image|backgroundImage|background)\s*:\s*['"]?\s*url\s*\(\s*['"]([^'"]+\.(png|jpg|jpeg|gif|svg|webp|ico|bmp))['"]\s*\)/gi);
+      for (const bgMatch of bgImageMatches) {
+        const imagePath = bgMatch[1];
+        relations.push({
+          targetFile: this.resolveImportPath(imagePath, filePath),
+          relationType: 'IMPORTS_IMAGE',
+          lineNumber: index + 1,
+        });
+      }
     });
 
     return { relations };

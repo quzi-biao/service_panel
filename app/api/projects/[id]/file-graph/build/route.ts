@@ -4,6 +4,9 @@ import { getNeo4jSession } from '@/lib/neo4j';
 import { FileParserFactory } from '@/lib/file-parsers/FileParserFactory';
 import { RowDataPacket } from 'mysql2';
 import { findTargetFile, FileContent } from '@/lib/file-graph-utils';
+import { FileRelation } from '@/lib/file-parsers/types';
+
+type FileRelationWithId = FileRelation & { targetFileId: number };
 
 export async function POST(
   request: NextRequest,
@@ -77,7 +80,7 @@ export async function POST(
         const parseResult = parser.parse(file.file_path, file.content);
 
         // 去重：使用 Map 存储唯一的关系
-        const uniqueRelations = new Map<string, typeof parseResult.relations[0]>();
+        const uniqueRelations = new Map<string, FileRelationWithId>();
         
         for (const relation of parseResult.relations) {
           const targetFile = findTargetFile(relation.targetFile, file.file_path, fileContents);
@@ -105,7 +108,7 @@ export async function POST(
              ON CREATE SET r.lineNumber = $lineNumber`,
             {
               sourceId: file.id.toString(),
-              targetId: (relation as any).targetFileId.toString(),
+              targetId: relation.targetFileId.toString(),
               projectId,
               lineNumber: relation.lineNumber || 0,
             }
