@@ -26,10 +26,11 @@ export default function FileContentViewer({
   loadingContent,
 }: FileContentViewerProps) {
   return (
-    <div className="col-span-9 bg-white rounded-lg shadow overflow-auto">
+    <div className="col-span-9 bg-white rounded-lg shadow flex flex-col overflow-hidden">
       {selectedFile ? (
         <>
-          <div className="p-4 border-b">
+          {/* 固定的标题栏 */}
+          <div className="p-4 border-b flex-shrink-0">
             <h2 className="font-semibold text-gray-900">{selectedFile.file_name}</h2>
             <p className="text-sm text-gray-500 mt-1">{selectedFile.file_path}</p>
             {selectedFile.file_md5 && (
@@ -38,7 +39,8 @@ export default function FileContentViewer({
               </p>
             )}
           </div>
-          <div className="p-4">
+          {/* 可滚动的内容区域 */}
+          <div className="flex-1 overflow-auto p-4">
             {loadingContent ? (
               <div className="flex items-center justify-center h-64">
                 <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />

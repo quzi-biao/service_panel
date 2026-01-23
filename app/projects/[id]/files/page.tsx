@@ -38,6 +38,8 @@ export default function ProjectFilesPage() {
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
   const [loadingContent, setLoadingContent] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncingAll, setSyncingAll] = useState(false);
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set(['/']));
 
   useEffect(() => {
@@ -181,48 +183,114 @@ export default function ProjectFilesPage() {
     }
   };
 
+  const syncFile = async (file: ProjectFile) => {
+    try {
+      setSyncing(true);
+      const response = await fetch(`/api/projects/${projectId}/files/${file.id}/sync`, {
+        method: 'POST',
+      });
+      const result = await response.json();
+      
+      if (result.success) {
+        alert(result.updated ? '文件内容已更新到数据库' : '文件内容已同步到数据库');
+        await fetchFiles();
+      } else {
+        alert('同步失败: ' + (result.error || '未知错误'));
+      }
+    } catch (error) {
+      console.error('Error syncing file:', error);
+      alert('同步失败');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const syncAllFiles = async () => {
+    try {
+      setSyncingAll(true);
+      const response = await fetch(`/api/projects/${projectId}/files/sync-all`, {
+        method: 'POST',
+      });
+      const result = await response.json();
+      
+      if (result.success) {
+        const message = `同步完成！\n总文件数: ${result.totalFiles}\n已同步: ${result.syncedCount}\n从磁盘更新: ${result.updatedFromDisk}\n从数据库更新: ${result.updatedFromDb}`;
+        alert(message);
+        await fetchFiles();
+      } else {
+        alert('同步失败: ' + (result.error || '未知错误'));
+      }
+    } catch (error) {
+      console.error('Error syncing all files:', error);
+      alert('同步失败');
+    } finally {
+      setSyncingAll(false);
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header 
+        leftContent={
+          <div className="flex items-center gap-6">
+            <button
+              onClick={() => router.push('/projects')}
+              className="text-gray-400 hover:text-white transition-colors"
+            >
+              ← 返回
+            </button>
+            <h1 className="text-lg font-semibold text-white">{project?.name || '项目文件'}</h1>
+          </div>
+        }
+        rightContent={
+          <>
+            <button
+              onClick={scanFiles}
+              disabled={scanning}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            >
+              {scanning ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  扫描中...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  扫描文件
+                </>
+              )}
+            </button>
+            <button
+              onClick={syncAllFiles}
+              disabled={syncingAll}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+            >
+              {syncingAll ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  同步中...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  同步文件
+                </>
+              )}
+            </button>
+          </>
+        }
+      />
       
       <div className="max-w-full mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.push(`/projects/${projectId}`)}
-              className="text-indigo-600 hover:text-indigo-700"
-            >
-              ← 返回项目详情
-            </button>
-            <h1 className="text-xl font-bold text-gray-900">{project?.name || '项目文件'}</h1>
-          </div>
-          
-          <button
-            onClick={scanFiles}
-            disabled={scanning}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {scanning ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                扫描中...
-              </>
-            ) : (
-              <>
-                <RefreshCw className="w-3.5 h-3.5" />
-                扫描文件
-              </>
-            )}
-          </button>
-        </div>
 
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
           </div>
         ) : (
-          <div className="grid grid-cols-12 gap-4 h-[calc(100vh-200px)]">
+          <div className="grid grid-cols-12 gap-4 h-[calc(100vh-140px)]">
             <FileTreeNavigation
               tree={tree}
               selectedFile={selectedFile}
