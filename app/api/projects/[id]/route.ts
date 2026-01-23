@@ -32,7 +32,7 @@ export async function GET(
       [params.id]
     );
 
-    const project = {
+    const project: Project = {
       ...rows[0],
       is_pinned: Boolean(rows[0].is_pinned),
       service_urls: rows[0].service_urls ? JSON.parse(rows[0].service_urls) : null,
@@ -40,9 +40,9 @@ export async function GET(
         middleware: middlewareRows,
         resources: resourceRows
       }
-    };
+    } as Project;
 
-    return NextResponse.json(project as Project);
+    return NextResponse.json(project);
   } catch (error) {
     console.error('Error fetching project:', error);
     return NextResponse.json(
@@ -115,13 +115,13 @@ export async function PUT(
       [params.id]
     );
 
-    const project = {
+    const project: Project = {
       ...rows[0],
       is_pinned: Boolean(rows[0].is_pinned),
       service_urls: rows[0].service_urls ? JSON.parse(rows[0].service_urls) : null
-    };
+    } as Project;
 
-    return NextResponse.json(project as Project);
+    return NextResponse.json(project);
   } catch (error) {
     console.error('Error updating project:', error);
     return NextResponse.json(
@@ -183,11 +183,11 @@ export async function PATCH(
         [params.id]
       );
 
-      const project = {
+      const project: Project = {
         ...rows[0],
         is_pinned: Boolean(rows[0].is_pinned),
         service_urls: rows[0].service_urls ? JSON.parse(rows[0].service_urls) : null
-      };
+      } as Project;
 
       return NextResponse.json(project);
     }
