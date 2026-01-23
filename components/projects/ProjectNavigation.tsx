@@ -75,7 +75,9 @@ export default function ProjectNavigation({ currentProjectId, onProjectChange }:
     const query = searchQuery.toLowerCase();
     return project.name.toLowerCase().includes(query) ||
            project.description?.toLowerCase().includes(query) ||
-           getTypeName(project.project_type).toLowerCase().includes(query);
+           getTypeName(project.project_type).toLowerCase().includes(query) ||
+           project.dev_device_path?.toLowerCase().includes(query) ||
+           project.project_url?.toLowerCase().includes(query);
   });
 
   const projectsByType: ProjectsByType = filteredProjects.reduce((acc, project) => {
@@ -205,7 +207,8 @@ export default function ProjectNavigation({ currentProjectId, onProjectChange }:
                     // Pinned projects first
                     if (a.is_pinned && !b.is_pinned) return -1;
                     if (!a.is_pinned && b.is_pinned) return 1;
-                    return 0;
+                    // Within same pinned status, sort by name
+                    return a.name.localeCompare(b.name, 'zh-CN');
                   })
                   .map((project) => (
                     <div

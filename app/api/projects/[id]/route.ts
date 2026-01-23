@@ -57,33 +57,57 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const body: ProjectBasicInput = await request.json();
+    const body = await request.json();
 
-    if (!body.name || !body.project_type) {
+    // Build dynamic update query based on provided fields
+    const updates: string[] = [];
+    const values: any[] = [];
+
+    if (body.name !== undefined) {
+      updates.push('name = ?');
+      values.push(body.name);
+    }
+    if (body.project_type !== undefined) {
+      updates.push('project_type = ?');
+      values.push(body.project_type);
+    }
+    if (body.description !== undefined) {
+      updates.push('description = ?');
+      values.push(body.description || null);
+    }
+    if (body.project_url !== undefined) {
+      updates.push('project_url = ?');
+      values.push(body.project_url || null);
+    }
+    if (body.dev_device_name !== undefined) {
+      updates.push('dev_device_name = ?');
+      values.push(body.dev_device_name || null);
+    }
+    if (body.dev_device_path !== undefined) {
+      updates.push('dev_device_path = ?');
+      values.push(body.dev_device_path || null);
+    }
+    if (body.deploy_server !== undefined) {
+      updates.push('deploy_server = ?');
+      values.push(body.deploy_server || null);
+    }
+    if (body.service_urls !== undefined) {
+      updates.push('service_urls = ?');
+      values.push(body.service_urls ? JSON.stringify(body.service_urls) : null);
+    }
+
+    if (updates.length === 0) {
       return NextResponse.json(
-        { error: 'Name and project type are required' },
+        { error: 'No fields to update' },
         { status: 400 }
       );
     }
 
-    const serviceUrlsJson = body.service_urls ? JSON.stringify(body.service_urls) : null;
+    values.push(params.id);
 
     await pool.query<ResultSetHeader>(
-      `UPDATE projects 
-       SET name = ?, project_type = ?, description = ?, project_url = ?, dev_device_name = ?, 
-           dev_device_path = ?, deploy_server = ?, service_urls = ?
-       WHERE id = ?`,
-      [
-        body.name,
-        body.project_type,
-        body.description || null,
-        body.project_url || null,
-        body.dev_device_name || null,
-        body.dev_device_path || null,
-        body.deploy_server || null,
-        serviceUrlsJson,
-        params.id
-      ]
+      `UPDATE projects SET ${updates.join(', ')} WHERE id = ?`,
+      values
     );
 
     const [rows] = await pool.query<RowDataPacket[]>(
