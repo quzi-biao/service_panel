@@ -25,7 +25,7 @@ export default function Header({ children, leftContent, rightContent }: HeaderPr
               leftContent
             ) : (
               <>
-                <h1 className="text-xl font-bold text-white">
+                <h1 className="text-xl font-bold text-white hidden md:block">
                   服务面板
                 </h1>
                 
@@ -39,7 +39,7 @@ export default function Header({ children, leftContent, rightContent }: HeaderPr
                     }`}
                   >
                     <Server className="w-4 h-4" />
-                    <span className="font-medium">服务管理</span>
+                    <span className="font-medium hidden md:inline">服务管理</span>
                   </button>
                   
                   <button
@@ -51,7 +51,7 @@ export default function Header({ children, leftContent, rightContent }: HeaderPr
                     }`}
                   >
                     <FolderGit2 className="w-4 h-4" />
-                    <span className="font-medium">项目管理</span>
+                    <span className="font-medium hidden md:inline">项目管理</span>
                   </button>
                 </nav>
               </>

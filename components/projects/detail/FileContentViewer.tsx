@@ -135,7 +135,7 @@ export default function FileContentViewer({
   loadingContent,
 }: FileContentViewerProps) {
   const language = selectedFile ? getLanguageFromExtension(selectedFile.file_name) : 'text';
-  const [selectedTheme, setSelectedTheme] = useState<keyof typeof themes>('VS Code Dark');
+  const [selectedTheme, setSelectedTheme] = useState<keyof typeof themes>('VS Light');
   const [showThemeSelector, setShowThemeSelector] = useState(false);
   
   return (
@@ -160,7 +160,7 @@ export default function FileContentViewer({
                   className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                 >
                   <Palette className="w-3.5 h-3.5" />
-                  {selectedTheme}
+                  <span className="hidden md:inline">{selectedTheme}</span>
                 </button>
                 {showThemeSelector && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10 max-h-80 overflow-auto">

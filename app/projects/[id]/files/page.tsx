@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { RefreshCw, Loader2 } from 'lucide-react';
-import Header from '@/components/shared/Header';
+import { Loader2, RefreshCw, Menu } from 'lucide-react';
 import FileTreeNavigation from '@/components/projects/detail/FileTreeNavigation';
 import FileContentViewer from '@/components/projects/detail/FileContentViewer';
+import MobileFileSidebar from '@/components/projects/detail/MobileFileSidebar';
+import Header from '@/components/shared/Header';
 
 interface ProjectFile {
   id: number;
@@ -41,6 +42,7 @@ export default function ProjectFilesPage() {
   const [syncing, setSyncing] = useState(false);
   const [syncingAll, setSyncingAll] = useState(false);
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set(['/']));
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     fetchProject();
@@ -529,17 +531,26 @@ export default function ProjectFilesPage() {
               onClick={() => router.push('/projects')}
               className="text-gray-400 hover:text-white transition-colors"
             >
-              ← 返回
+              ← <span className="hidden md:inline">返回</span>
             </button>
-            <h1 className="text-lg font-semibold text-white">{project?.name || '项目文件'}</h1>
+            <h1 className="text-lg font-semibold text-white hidden md:block">{project?.name || '项目文件'}</h1>
           </div>
         }
         rightContent={
           <>
+            {/* 移动端菜单按钮 */}
+            <button
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="md:hidden p-2 text-white hover:bg-gray-800 rounded-lg transition-colors"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            
+            {/* 桌面端扫描和同步按钮 */}
             <button
               onClick={scanFiles}
               disabled={scanning}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
             >
               {scanning ? (
                 <>
@@ -556,7 +567,7 @@ export default function ProjectFilesPage() {
             <button
               onClick={syncAllFiles}
               disabled={syncingAll}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
             >
               {syncingAll ? (
                 <>
@@ -582,22 +593,41 @@ export default function ProjectFilesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-12 gap-4 h-[calc(100vh-100px)]">
-            <FileTreeNavigation
-              tree={tree}
-              selectedFile={selectedFile}
-              expandedPaths={expandedPaths}
-              onSelectFile={selectFile}
-              onDeleteFile={deleteFile}
-              filesCount={files.filter(f => !f.is_directory).length}
-            />
-            <FileContentViewer
-              selectedFile={selectedFile}
-              fileContent={fileContent}
-              loadingContent={loadingContent}
-            />
+            {/* 桌面端文件树 */}
+            <div className="hidden md:block md:col-span-3">
+              <FileTreeNavigation
+                tree={tree}
+                selectedFile={selectedFile}
+                expandedPaths={expandedPaths}
+                onSelectFile={selectFile}
+                onDeleteFile={deleteFile}
+                filesCount={files.filter(f => !f.is_directory).length}
+              />
+            </div>
+            
+            {/* 文件内容查看器 */}
+            <div className="col-span-12 md:col-span-9">
+              <FileContentViewer
+                selectedFile={selectedFile}
+                fileContent={fileContent}
+                loadingContent={loadingContent}
+              />
+            </div>
           </div>
         )}
       </div>
+
+      {/* 移动端侧边栏 */}
+      <MobileFileSidebar
+        isOpen={isMobileSidebarOpen}
+        onClose={() => setIsMobileSidebarOpen(false)}
+        tree={tree}
+        selectedFile={selectedFile}
+        expandedPaths={expandedPaths}
+        onSelectFile={selectFile}
+        onDeleteFile={deleteFile}
+        filesCount={files.filter(f => !f.is_directory).length}
+      />
     </div>
   );
 }

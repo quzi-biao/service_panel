@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Project, ProjectBasicInput } from '@/types/project';
-import { Plus, Settings } from 'lucide-react';
+import { Plus, Settings, Menu } from 'lucide-react';
 import Header from '@/components/shared/Header';
 import ProjectBasicInfo from '@/components/projects/detail/ProjectBasicInfo';
 import ProjectDeviceInfo from '@/components/projects/detail/ProjectDeviceInfo';
@@ -13,6 +13,7 @@ import ProjectPrompts from '@/components/projects/detail/ProjectPrompts';
 import ProjectNavigation from '@/components/projects/ProjectNavigation';
 import ProjectModal from '@/components/projects/ProjectModal';
 import ProjectTypeManagement from '@/components/projects/ProjectTypeManagement';
+import MobileProjectSidebar from '@/components/projects/MobileProjectSidebar';
 import { useProjects } from '@/hooks/useProjects';
 
 export default function ProjectsPage() {
@@ -25,6 +26,7 @@ export default function ProjectsPage() {
   
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [showTypeManagement, setShowTypeManagement] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [projectFormData, setProjectFormData] = useState<ProjectBasicInput>({
     name: '',
     project_type: '',
@@ -174,7 +176,7 @@ export default function ProjectsPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
             </svg>
-            查看文件
+            <span className="hidden sm:inline">查看文件</span>
           </button>
         </div>
       </div>
@@ -248,13 +250,22 @@ export default function ProjectsPage() {
   return (
     <>
       <Header>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {/* 移动端菜单按钮 */}
+          <button
+            onClick={() => setIsMobileSidebarOpen(true)}
+            className="md:hidden inline-flex items-center px-3 py-1.5 text-sm bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-all shadow-md hover:shadow-lg"
+            title="项目列表"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
+          
           <button
             onClick={() => setShowProjectModal(true)}
-            className="inline-flex items-center px-3 py-1.5 text-sm bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
+            className="inline-flex items-center px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg"
+            title="创建项目"
           >
-            <Plus className="w-4 h-4 mr-1.5" />
-            新建项目
+            <Plus className="w-4 h-4" />
           </button>
           <button
             onClick={() => setShowTypeManagement(true)}
@@ -265,19 +276,21 @@ export default function ProjectsPage() {
           </button>
         </div>
       </Header>
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-8">
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex gap-6">
-            <aside className="w-64 flex-shrink-0">
+            {/* 桌面端导航 */}
+            <aside className="hidden md:block w-64 flex-shrink-0">
               <ProjectNavigation 
                 currentProjectId={currentProjectId || ''} 
                 onProjectChange={handleProjectChange}
               />
             </aside>
 
+            {/* 主内容区 */}
             <main className="flex-1 min-w-0">
               <div className="bg-white/60 backdrop-blur-sm rounded-3xl shadow-xl border border-white/20">
-                <div className="p-8">
+                <div className="p-4 md:p-8">
                   {renderHeader()}
                   {renderContent()}
                 </div>
@@ -286,6 +299,14 @@ export default function ProjectsPage() {
           </div>
         </div>
       </div>
+
+      {/* 移动端侧边栏 */}
+      <MobileProjectSidebar
+        isOpen={isMobileSidebarOpen}
+        onClose={() => setIsMobileSidebarOpen(false)}
+        currentProjectId={currentProjectId}
+        onProjectChange={handleProjectChange}
+      />
 
       <ProjectModal
         show={showProjectModal}
