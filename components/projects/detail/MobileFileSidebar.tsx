@@ -44,7 +44,10 @@ export default function MobileFileSidebar({
 }: MobileFileSidebarProps) {
   const handleSelectFile = (file: ProjectFile) => {
     onSelectFile(file);
-    onClose(); // 选择文件后自动关闭侧边栏
+    // 只有点击文件时才关闭侧边栏，点击目录不关闭
+    if (!file.is_directory) {
+      onClose();
+    }
   };
 
   return (

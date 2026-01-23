@@ -116,14 +116,16 @@ export default function FileTreeNavigation({
         </p>
       </div>
       <div className="flex-1 overflow-auto p-2">
-        {tree.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p>暂无文件</p>
-            <p className="text-sm mt-2">点击"扫描文件"按钮开始</p>
-          </div>
-        ) : (
-          renderTree(tree)
-        )}
+        <div className="min-w-max">
+          {tree.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <p>暂无文件</p>
+              <p className="text-sm mt-2">点击"扫描文件"按钮开始</p>
+            </div>
+          ) : (
+            renderTree(tree)
+          )}
+        </div>
       </div>
       </div>
 
