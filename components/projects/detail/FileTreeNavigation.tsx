@@ -1,6 +1,7 @@
 'use client';
 
-import { ChevronRight, ChevronDown, File, Folder, FolderOpen } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronRight, ChevronDown, File, Folder, FolderOpen, Trash2 } from 'lucide-react';
 
 interface ProjectFile {
   id: number;
@@ -25,6 +26,7 @@ interface FileTreeNavigationProps {
   selectedFile: ProjectFile | null;
   expandedPaths: Set<string>;
   onSelectFile: (file: ProjectFile) => void;
+  onDeleteFile: (file: ProjectFile) => void;
   filesCount: number;
 }
 
@@ -33,8 +35,26 @@ export default function FileTreeNavigation({
   selectedFile,
   expandedPaths,
   onSelectFile,
+  onDeleteFile,
   filesCount,
 }: FileTreeNavigationProps) {
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; file: ProjectFile } | null>(null);
+
+  const handleContextMenu = (e: React.MouseEvent, file: ProjectFile) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY, file });
+  };
+
+  const handleCloseContextMenu = () => {
+    setContextMenu(null);
+  };
+
+  const handleDelete = () => {
+    if (contextMenu) {
+      onDeleteFile(contextMenu.file);
+      setContextMenu(null);
+    }
+  };
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 B';
     const k = 1024;
@@ -52,6 +72,7 @@ export default function FileTreeNavigation({
           }`}
           style={{ paddingLeft: `${level * 20 + 8}px` }}
           onClick={() => onSelectFile(node.file)}
+          onContextMenu={(e) => handleContextMenu(e, node.file)}
         >
           {node.file.is_directory ? (
             <>
@@ -86,7 +107,8 @@ export default function FileTreeNavigation({
   };
 
   return (
-    <div className="col-span-3 bg-white rounded-lg shadow overflow-auto">
+    <>
+      <div className="col-span-3 bg-white rounded-lg shadow overflow-auto" onClick={handleCloseContextMenu}>
       <div className="p-4 border-b">
         <h2 className="font-semibold text-gray-900">文件列表</h2>
         <p className="text-sm text-gray-500 mt-1">
@@ -103,6 +125,29 @@ export default function FileTreeNavigation({
           renderTree(tree)
         )}
       </div>
-    </div>
+      </div>
+
+      {/* 右键菜单 */}
+      {contextMenu && (
+        <>
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={handleCloseContextMenu}
+          />
+          <div
+            className="fixed bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 min-w-[160px]"
+            style={{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }}
+          >
+            <button
+              onClick={handleDelete}
+              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              删除{contextMenu.file.is_directory ? '目录' : '文件'}
+            </button>
+          </div>
+        </>
+      )}
+    </>
   );
 }

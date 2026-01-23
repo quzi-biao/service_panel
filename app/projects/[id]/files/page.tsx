@@ -79,20 +79,132 @@ export default function ProjectFilesPage() {
   const scanFiles = async () => {
     try {
       setScanning(true);
-      const response = await fetch(`/api/projects/${projectId}/files`, {
-        method: 'POST',
-      });
-      const result = await response.json();
       
-      if (result.success) {
-        await fetchFiles();
-      } else {
-        alert('扫描失败: ' + (result.error || '未知错误'));
-      }
+      // 创建文件选择器
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.multiple = true;
+      input.webkitdirectory = true; // 允许选择文件夹
+      
+      input.onchange = async (e: any) => {
+        const selectedFiles = Array.from(e.target.files || []) as File[];
+        
+        if (selectedFiles.length === 0) {
+          setScanning(false);
+          return;
+        }
+
+        try {
+          // 过滤掉需要排除的文件
+          const filteredFiles = selectedFiles.filter(file => {
+            const filePath = file.webkitRelativePath || file.name;
+            return !shouldExclude(filePath);
+          });
+
+          const excludedCount = selectedFiles.length - filteredFiles.length;
+          
+          console.log('=== 文件扫描过滤信息 ===');
+          console.log(`选中文件总数: ${selectedFiles.length}`);
+          console.log(`被排除文件数: ${excludedCount}`);
+          console.log(`将要扫描文件数: ${filteredFiles.length}`);
+          console.log('====================');
+          
+          if (filteredFiles.length === 0) {
+            alert(`所有文件都被排除了\n选中: ${selectedFiles.length} 个文件\n排除: ${excludedCount} 个文件`);
+            setScanning(false);
+            return;
+          }
+
+          // 获取根目录名称（第一个文件的第一级路径）
+          const rootDirName = filteredFiles.length > 0 
+            ? (filteredFiles[0].webkitRelativePath || filteredFiles[0].name).split('/')[0]
+            : '';
+
+          // 构建文件树结构，移除根目录前缀
+          const fileInfos = filteredFiles.map(file => {
+            const fullPath = file.webkitRelativePath || file.name;
+            const pathParts = fullPath.split('/');
+            
+            // 移除根目录，从第二级开始
+            const relativeParts = pathParts.slice(1);
+            if (relativeParts.length === 0) {
+              return null; // 跳过根目录本身
+            }
+            
+            const filePath = relativeParts.join('/');
+            const fileName = relativeParts[relativeParts.length - 1];
+            const parentPath = relativeParts.length > 1 ? relativeParts.slice(0, -1).join('/') : '';
+            const fileType = fileName.includes('.') ? fileName.split('.').pop() || 'file' : 'file';
+            
+            return {
+              filePath,
+              fileName,
+              fileSize: file.size,
+              fileType,
+              isDirectory: false,
+              parentPath: parentPath || null,
+            };
+          }).filter(f => f !== null);
+
+          // 添加目录节点（不包括根目录）
+          const directories = new Set<string>();
+          filteredFiles.forEach(file => {
+            const fullPath = file.webkitRelativePath || file.name;
+            const pathParts = fullPath.split('/');
+            
+            // 从第二级开始创建目录节点（跳过根目录）
+            for (let i = 2; i < pathParts.length; i++) {
+              const relativeParts = pathParts.slice(1, i);
+              const dirPath = relativeParts.join('/');
+              
+              if (!directories.has(dirPath)) {
+                directories.add(dirPath);
+                const dirName = relativeParts[relativeParts.length - 1];
+                const parentPath = relativeParts.length > 1 ? relativeParts.slice(0, -1).join('/') : '';
+                
+                fileInfos.push({
+                  filePath: dirPath,
+                  fileName: dirName,
+                  fileSize: 0,
+                  fileType: 'directory',
+                  isDirectory: true,
+                  parentPath: parentPath || null,
+                });
+              }
+            }
+          });
+
+          console.log(`根目录 "${rootDirName}" 已被过滤，只记录其子文件和子目录`);
+
+          // 上传文件信息到服务器
+          const response = await fetch(`/api/projects/${projectId}/files/scan`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ files: fileInfos }),
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            alert(`扫描完成！\n扫描文件数: ${result.filesCount}`);
+            await fetchFiles();
+          } else {
+            alert('扫描失败: ' + (result.error || '未知错误'));
+          }
+        } catch (error) {
+          console.error('Error scanning files:', error);
+          alert('扫描失败');
+        } finally {
+          setScanning(false);
+        }
+      };
+      
+      input.click();
     } catch (error) {
       console.error('Error scanning files:', error);
       alert('扫描失败');
-    } finally {
       setScanning(false);
     }
   };
@@ -183,6 +295,38 @@ export default function ProjectFilesPage() {
     }
   };
 
+  const deleteFile = async (file: ProjectFile) => {
+    const confirmMessage = file.is_directory 
+      ? `确定要删除目录 "${file.file_name}" 及其所有子文件吗？`
+      : `确定要删除文件 "${file.file_name}" 吗？`;
+    
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}/files/${file.id}/delete`, {
+        method: 'DELETE',
+      });
+      const result = await response.json();
+      
+      if (result.success) {
+        alert(result.message);
+        await fetchFiles();
+        // 如果删除的是当前选中的文件，清空选中状态
+        if (selectedFile?.id === file.id) {
+          setSelectedFile(null);
+          setFileContent('');
+        }
+      } else {
+        alert('删除失败: ' + (result.error || '未知错误'));
+      }
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      alert('删除失败');
+    }
+  };
+
   const syncFile = async (file: ProjectFile) => {
     try {
       setSyncing(true);
@@ -205,25 +349,172 @@ export default function ProjectFilesPage() {
     }
   };
 
+  // 需要排除的目录和文件模式
+  const EXCLUDED_PATTERNS = [
+    'node_modules',
+    'dist',
+    'build',
+    'out',
+    '.next',
+    'target',
+    'bin',
+    '.gradle',
+    '.mvn',
+    'vendor',
+    '__pycache__',
+    '.pytest_cache',
+    'venv',
+    'env',
+    '.venv',
+    '.git',
+    '.svn',
+    '.hg',
+    '.idea',
+    '.vscode',
+    '.DS_Store',
+    'coverage',
+    '.nyc_output',
+    'logs',
+    '*.log',
+    '.cache',
+    'tmp',
+    'temp',
+  ];
+
+  // 检查路径是否应该被排除（在目录级别就排除）
+  const shouldExclude = (filePath: string): boolean => {
+    const normalizedPath = filePath.replace(/\\/g, '/');
+    const pathParts = normalizedPath.split('/');
+    
+    // 检查路径的每个部分是否匹配排除模式
+    for (const part of pathParts) {
+      for (const pattern of EXCLUDED_PATTERNS) {
+        if (pattern.includes('*')) {
+          const regex = new RegExp('^' + pattern.replace('*', '.*') + '$');
+          if (regex.test(part)) {
+            return true;
+          }
+        } else if (part === pattern) {
+          // 精确匹配目录名或文件名
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  };
+
   const syncAllFiles = async () => {
     try {
       setSyncingAll(true);
-      const response = await fetch(`/api/projects/${projectId}/files/sync-all`, {
-        method: 'POST',
-      });
-      const result = await response.json();
       
-      if (result.success) {
-        const message = `同步完成！\n总文件数: ${result.totalFiles}\n已同步: ${result.syncedCount}\n从磁盘更新: ${result.updatedFromDisk}\n从数据库更新: ${result.updatedFromDb}`;
-        alert(message);
-        await fetchFiles();
-      } else {
-        alert('同步失败: ' + (result.error || '未知错误'));
-      }
+      // 创建文件选择器
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.multiple = true;
+      input.webkitdirectory = true; // 允许选择文件夹
+      
+      input.onchange = async (e: any) => {
+        const selectedFiles = Array.from(e.target.files || []) as File[];
+        
+        if (selectedFiles.length === 0) {
+          setSyncingAll(false);
+          return;
+        }
+
+        try {
+          // 过滤掉需要排除的文件
+          const excludedFiles: string[] = [];
+          const filteredFiles = selectedFiles.filter(file => {
+            const filePath = file.webkitRelativePath || file.name;
+            const excluded = shouldExclude(filePath);
+            if (excluded && excludedFiles.length < 10) {
+              excludedFiles.push(filePath);
+            }
+            return !excluded;
+          });
+
+          const excludedCount = selectedFiles.length - filteredFiles.length;
+          
+          console.log('=== 文件同步过滤信息 ===');
+          console.log(`选中文件总数: ${selectedFiles.length}`);
+          console.log(`被排除文件数: ${excludedCount}`);
+          console.log(`将要上传文件数: ${filteredFiles.length}`);
+          if (excludedFiles.length > 0) {
+            console.log('被排除的文件示例（前10个）:');
+            excludedFiles.forEach(f => console.log(`  - ${f}`));
+          }
+          console.log('====================');
+          
+          if (filteredFiles.length === 0) {
+            alert(`所有文件都被排除了\n选中: ${selectedFiles.length} 个文件\n排除: ${excludedCount} 个文件`);
+            setSyncingAll(false);
+            return;
+          }
+
+          // 读取所有文件内容
+          const fileContents = await Promise.all(
+            filteredFiles.map(async (file) => {
+              const content = await file.text();
+              const filePath = file.webkitRelativePath || file.name;
+              
+              // 在数据库中查找对应的文件记录
+              const matchingFile = files.find(f => 
+                f.file_path === filePath || 
+                f.file_path.endsWith('/' + filePath) ||
+                filePath.endsWith(f.file_path)
+              );
+              
+              if (matchingFile) {
+                return {
+                  fileId: matchingFile.id,
+                  content,
+                  filePath: matchingFile.file_path
+                };
+              }
+              return null;
+            })
+          );
+
+          // 过滤掉未匹配的文件
+          const validFiles = fileContents.filter(f => f !== null);
+          
+          if (validFiles.length === 0) {
+            alert('没有找到匹配的文件');
+            setSyncingAll(false);
+            return;
+          }
+
+          // 上传文件内容到服务器
+          const response = await fetch(`/api/projects/${projectId}/files/upload-content`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ files: validFiles }),
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            const message = `同步完成！\n总文件数: ${result.totalFiles}\n已同步: ${result.syncedCount}\n更新: ${result.updatedCount}\n新建: ${result.createdCount}`;
+            alert(message);
+            await fetchFiles();
+          } else {
+            alert('同步失败: ' + (result.error || '未知错误'));
+          }
+        } catch (error) {
+          console.error('Error uploading files:', error);
+          alert('同步失败');
+        } finally {
+          setSyncingAll(false);
+        }
+      };
+      
+      input.click();
     } catch (error) {
-      console.error('Error syncing all files:', error);
+      console.error('Error syncing files:', error);
       alert('同步失败');
-    } finally {
       setSyncingAll(false);
     }
   };
@@ -296,6 +587,7 @@ export default function ProjectFilesPage() {
               selectedFile={selectedFile}
               expandedPaths={expandedPaths}
               onSelectFile={selectFile}
+              onDeleteFile={deleteFile}
               filesCount={files.filter(f => !f.is_directory).length}
             />
             <FileContentViewer
