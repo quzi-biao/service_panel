@@ -602,6 +602,8 @@ export default function ProjectFilesPage() {
                 onSelectFile={selectFile}
                 onDeleteFile={deleteFile}
                 filesCount={files.filter(f => !f.is_directory).length}
+                projectId={projectId}
+                onNavigateToGraph={() => router.push(`/projects/${projectId}/file-graph`)}
               />
             </div>
             
@@ -627,6 +629,8 @@ export default function ProjectFilesPage() {
         onSelectFile={selectFile}
         onDeleteFile={deleteFile}
         filesCount={files.filter(f => !f.is_directory).length}
+        projectId={projectId}
+        onNavigateToGraph={() => router.push(`/projects/${projectId}/file-graph`)}
       />
     </div>
   );

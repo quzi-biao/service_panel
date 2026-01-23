@@ -30,6 +30,8 @@ interface MobileFileSidebarProps {
   onSelectFile: (file: ProjectFile) => void;
   onDeleteFile: (file: ProjectFile) => void;
   filesCount: number;
+  projectId: string;
+  onNavigateToGraph?: () => void;
 }
 
 export default function MobileFileSidebar({
@@ -41,6 +43,8 @@ export default function MobileFileSidebar({
   onSelectFile,
   onDeleteFile,
   filesCount,
+  projectId,
+  onNavigateToGraph,
 }: MobileFileSidebarProps) {
   const handleSelectFile = (file: ProjectFile) => {
     onSelectFile(file);
@@ -98,6 +102,8 @@ export default function MobileFileSidebar({
                 onSelectFile={handleSelectFile}
                 onDeleteFile={onDeleteFile}
                 filesCount={filesCount}
+                projectId={projectId}
+                onNavigateToGraph={onNavigateToGraph}
               />
             )}
           </div>

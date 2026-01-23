@@ -12,9 +12,9 @@ const pool = mysql.createPool({
   timezone: '+08:00',
 });
 
-export async function query(sql: string, params?: any[]) {
+export async function query<T = any>(sql: string, params?: any[]): Promise<T> {
   const [rows] = await pool.execute(sql, params);
-  return rows;
+  return rows as T;
 }
 
 export default pool;

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronRight, ChevronDown, File, Folder, FolderOpen, Trash2 } from 'lucide-react';
+import { ChevronRight, ChevronDown, File, Folder, FolderOpen, Trash2, Network } from 'lucide-react';
 
 interface ProjectFile {
   id: number;
@@ -28,6 +28,8 @@ interface FileTreeNavigationProps {
   onSelectFile: (file: ProjectFile) => void;
   onDeleteFile: (file: ProjectFile) => void;
   filesCount: number;
+  projectId: string;
+  onNavigateToGraph?: () => void;
 }
 
 export default function FileTreeNavigation({
@@ -37,6 +39,8 @@ export default function FileTreeNavigation({
   onSelectFile,
   onDeleteFile,
   filesCount,
+  projectId,
+  onNavigateToGraph,
 }: FileTreeNavigationProps) {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; file: ProjectFile } | null>(null);
 
@@ -139,10 +143,26 @@ export default function FileTreeNavigation({
     <>
       <div className="h-full bg-white rounded-lg shadow flex flex-col overflow-hidden" onClick={handleCloseContextMenu}>
       <div className="p-4 border-b flex-shrink-0">
-        <h2 className="font-semibold text-gray-900">文件列表</h2>
-        <p className="text-sm text-gray-500 mt-1">
-          共 {filesCount} 个文件
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-semibold text-gray-900">文件列表</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              共 {filesCount} 个文件
+            </p>
+          </div>
+          {onNavigateToGraph && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onNavigateToGraph();
+              }}
+              className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+              title="文件关系图谱"
+            >
+              <Network className="w-5 h-5" />
+            </button>
+          )}
+        </div>
       </div>
       <div className="flex-1 overflow-auto p-2">
         <div className="min-w-max">
