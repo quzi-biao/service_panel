@@ -54,19 +54,36 @@ export default function ProjectDeviceInfo({ project, onUpdate }: ProjectDeviceIn
   };
 
   const handleOpenInTerminal = async (path: string) => {
-    try {
-      const response = await fetch('/api/open-terminal', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path }),
-      });
-      
-      if (!response.ok) {
-        alert('打开终端失败');
+    // 检查是否在 Electron 环境中
+    if (typeof window !== 'undefined' && window.electron?.isElectron) {
+      try {
+        // 使用 Electron IPC 打开终端
+        await window.electron.openTerminal(path);
+        return;
+      } catch (error) {
+        console.error('Failed to open terminal:', error);
+        alert('打开终端失败，请检查路径是否正确');
+        return;
       }
-    } catch (error) {
-      console.error('Failed to open terminal:', error);
-      alert('打开终端失败');
+    }
+
+    // 非 Electron 环境：复制路径并提示用户
+    const userAgent = navigator.userAgent.toLowerCase();
+    let instructions = '';
+    
+    if (userAgent.includes('mac')) {
+      instructions = '请按 Cmd+Space 搜索 "终端" 打开，然后粘贴路径';
+    } else if (userAgent.includes('win')) {
+      instructions = '请按 Win+R 输入 cmd 打开命令提示符，然后粘贴路径';
+    } else {
+      instructions = '请按 Ctrl+Alt+T 打开终端，然后粘贴路径';
+    }
+
+    try {
+      await navigator.clipboard.writeText(`cd "${path}"`);
+      alert(`路径已复制到剪贴板:\ncd "${path}"\n\n${instructions}\n\n💡 提示：使用 Electron 桌面应用可直接打开终端`);
+    } catch (err) {
+      alert(`请手动在终端中执行:\ncd "${path}"\n\n${instructions}`);
     }
   };
 

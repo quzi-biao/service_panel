@@ -22,6 +22,7 @@
       "electron/**/*",
       "public/**/*",
       "package.json",
+      "package-lock.json",
       ".env"
     ],
     "afterPack": "./electron/after-pack.js",
