@@ -32,7 +32,7 @@ export async function GET(
       [params.id]
     );
 
-    const project: Project = {
+    const project = {
       ...rows[0],
       is_pinned: Boolean(rows[0].is_pinned),
       service_urls: rows[0].service_urls ? JSON.parse(rows[0].service_urls) : null,
@@ -40,7 +40,7 @@ export async function GET(
         middleware: middlewareRows,
         resources: resourceRows
       }
-    } as Project;
+    } as unknown as Project;
 
     return NextResponse.json(project);
   } catch (error) {
@@ -115,11 +115,11 @@ export async function PUT(
       [params.id]
     );
 
-    const project: Project = {
+    const project = {
       ...rows[0],
       is_pinned: Boolean(rows[0].is_pinned),
       service_urls: rows[0].service_urls ? JSON.parse(rows[0].service_urls) : null
-    } as Project;
+    } as unknown as Project;
 
     return NextResponse.json(project);
   } catch (error) {
@@ -183,11 +183,11 @@ export async function PATCH(
         [params.id]
       );
 
-      const project: Project = {
+      const project = {
         ...rows[0],
         is_pinned: Boolean(rows[0].is_pinned),
         service_urls: rows[0].service_urls ? JSON.parse(rows[0].service_urls) : null
-      } as Project;
+      } as unknown as Project;
 
       return NextResponse.json(project);
     }
