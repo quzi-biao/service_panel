@@ -74,7 +74,7 @@ export async function POST(
 
         // 获取数据库中的文件内容记录
         const contentRecords = await query(
-          'SELECT * FROM project_file_contents WHERE file_id = ?',
+          'SELECT * FROM file_contents WHERE file_id = ?',
           [dbFile.id]
         ) as any[];
 
@@ -85,9 +85,9 @@ export async function POST(
           // 数据库中没有内容记录，从磁盘同步到数据库
           const fileContent = fs.readFileSync(fullFilePath, 'utf-8');
           await query(
-            `INSERT INTO project_file_contents (file_id, content, file_size, file_md5)
-             VALUES (?, ?, ?, ?)`,
-            [dbFile.id, fileContent, stats.size, diskMD5]
+            `INSERT INTO file_contents (file_id, content)
+             VALUES (?, ?)`,
+            [dbFile.id, fileContent]
           );
 
           await query(
@@ -110,10 +110,10 @@ export async function POST(
               // 磁盘文件更新，同步到数据库
               const fileContent = fs.readFileSync(fullFilePath, 'utf-8');
               await query(
-                `UPDATE project_file_contents 
-                 SET content = ?, file_size = ?, file_md5 = ?, updated_at = NOW()
+                `UPDATE file_contents 
+                 SET content = ?, updated_at = NOW()
                  WHERE file_id = ?`,
-                [fileContent, stats.size, diskMD5, dbFile.id]
+                [fileContent, dbFile.id]
               );
 
               await query(
@@ -136,7 +136,7 @@ export async function POST(
                 `UPDATE project_files 
                  SET file_size = ?, file_md5 = ?, updated_at = NOW()
                  WHERE id = ?`,
-                [contentRecord.file_size, contentRecord.file_md5, dbFile.id]
+                [stats.size, diskMD5, dbFile.id]
               );
 
               updatedFromDb++;

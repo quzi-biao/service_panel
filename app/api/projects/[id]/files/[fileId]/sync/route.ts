@@ -69,17 +69,17 @@ export async function POST(
 
     // 检查是否已存在文件内容记录
     const existingContent = await query(
-      'SELECT id FROM project_file_contents WHERE file_id = ?',
+      'SELECT id FROM file_contents WHERE file_id = ?',
       [fileId]
     ) as any[];
 
     if (existingContent.length > 0) {
       // 更新现有记录
       await query(
-        `UPDATE project_file_contents 
-         SET content = ?, file_size = ?, file_md5 = ?, updated_at = NOW()
+        `UPDATE file_contents 
+         SET content = ?, updated_at = NOW()
          WHERE file_id = ?`,
-        [fileContent, stats.size, newMD5, fileId]
+        [fileContent, fileId]
       );
 
       // 同时更新 project_files 表中的 MD5 和大小
@@ -98,9 +98,9 @@ export async function POST(
     } else {
       // 插入新记录
       await query(
-        `INSERT INTO project_file_contents (file_id, content, file_size, file_md5)
-         VALUES (?, ?, ?, ?)`,
-        [fileId, fileContent, stats.size, newMD5]
+        `INSERT INTO file_contents (file_id, content)
+         VALUES (?, ?)`,
+        [fileId, fileContent]
       );
 
       // 同时更新 project_files 表中的 MD5 和大小
