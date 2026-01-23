@@ -63,47 +63,76 @@ export default function FileTreeNavigation({
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   };
 
+  // 获取合并后的显示名称和最终节点
+  const getCollapsedPath = (node: TreeNode): { displayName: string; finalNode: TreeNode } => {
+    if (!node.file.is_directory) {
+      return { displayName: node.file.file_name, finalNode: node };
+    }
+
+    const pathParts: string[] = [node.file.file_name];
+    let currentNode = node;
+
+    // 当当前节点是目录，且只有一个子节点，且该子节点也是目录时，继续合并
+    while (
+      currentNode.children.length === 1 &&
+      currentNode.children[0].file.is_directory
+    ) {
+      currentNode = currentNode.children[0];
+      pathParts.push(currentNode.file.file_name);
+    }
+
+    return {
+      displayName: pathParts.join('/'),
+      finalNode: currentNode
+    };
+  };
+
   const renderTree = (nodes: TreeNode[], level: number = 0) => {
-    return nodes.map(node => (
-      <div key={node.file.id}>
-        <div
-          className={`flex items-center gap-2 px-2 py-1 cursor-pointer hover:bg-gray-100 ${
-            selectedFile?.id === node.file.id ? 'bg-indigo-50' : ''
-          }`}
-          style={{ paddingLeft: `${level * 20 + 8}px` }}
-          onClick={() => onSelectFile(node.file)}
-          onContextMenu={(e) => handleContextMenu(e, node.file)}
-        >
-          {node.file.is_directory ? (
-            <>
-              {expandedPaths.has(node.file.file_path) ? (
-                <ChevronDown className="w-4 h-4 flex-shrink-0 text-gray-900" />
-              ) : (
-                <ChevronRight className="w-4 h-4 flex-shrink-0 text-gray-900" />
-              )}
-              {expandedPaths.has(node.file.file_path) ? (
-                <FolderOpen className="w-4 h-4 flex-shrink-0 text-gray-900" />
-              ) : (
-                <Folder className="w-4 h-4 flex-shrink-0 text-gray-900" />
-              )}
-            </>
-          ) : (
-            <>
-              <File className="w-4 h-4 flex-shrink-0 text-gray-900 ml-4" />
-            </>
-          )}
-          <span className="text-sm text-gray-900 truncate">{node.file.file_name}</span>
-          {!node.file.is_directory && (
-            <span className="text-xs text-gray-400 ml-auto">
-              {formatFileSize(node.file.file_size)}
-            </span>
+    return nodes.map(node => {
+      const { displayName, finalNode } = getCollapsedPath(node);
+      const isExpanded = expandedPaths.has(node.file.file_path);
+      
+      return (
+        <div key={node.file.id}>
+          <div
+            className={`flex items-center gap-2 px-2 py-1 cursor-pointer hover:bg-gray-100 ${
+              selectedFile?.id === node.file.id ? 'bg-indigo-50' : ''
+            }`}
+            style={{ paddingLeft: `${level * 20 + 8}px` }}
+            onClick={() => onSelectFile(node.file)}
+            onContextMenu={(e) => handleContextMenu(e, node.file)}
+          >
+            {node.file.is_directory ? (
+              <>
+                {isExpanded ? (
+                  <ChevronDown className="w-4 h-4 flex-shrink-0 text-gray-900" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 flex-shrink-0 text-gray-900" />
+                )}
+                {isExpanded ? (
+                  <FolderOpen className="w-4 h-4 flex-shrink-0 text-indigo-600" />
+                ) : (
+                  <Folder className="w-4 h-4 flex-shrink-0 text-indigo-600" />
+                )}
+              </>
+            ) : (
+              <>
+                <File className="w-4 h-4 flex-shrink-0 text-gray-900 ml-4" />
+              </>
+            )}
+            <span className="text-sm text-gray-900 truncate">{displayName}</span>
+            {!node.file.is_directory && (
+              <span className="text-xs text-gray-400 ml-auto">
+                {formatFileSize(node.file.file_size)}
+              </span>
+            )}
+          </div>
+          {isExpanded && (
+            <div>{renderTree(finalNode.children, level + 1)}</div>
           )}
         </div>
-        {expandedPaths.has(node.file.file_path) && (
-          <div>{renderTree(node.children, level + 1)}</div>
-        )}
-      </div>
-    ));
+      );
+    });
   };
 
   return (
