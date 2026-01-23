@@ -14,9 +14,10 @@ interface ProjectType {
 interface ProjectBasicInfoProps {
   project: Project;
   onUpdate: (data: Partial<Project>) => Promise<void>;
+  onEditingChange?: (isEditing: boolean) => void;
 }
 
-export default function ProjectBasicInfo({ project, onUpdate }: ProjectBasicInfoProps) {
+export default function ProjectBasicInfo({ project, onUpdate, onEditingChange }: ProjectBasicInfoProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: project.name,
@@ -61,6 +62,7 @@ export default function ProjectBasicInfo({ project, onUpdate }: ProjectBasicInfo
     try {
       await onUpdate(formData);
       setIsEditing(false);
+      onEditingChange?.(false);
     } catch (error) {
       console.error('Failed to update:', error);
     } finally {
@@ -75,6 +77,7 @@ export default function ProjectBasicInfo({ project, onUpdate }: ProjectBasicInfo
       description: project.description || '',
     });
     setIsEditing(false);
+    onEditingChange?.(false);
   };
 
   return (
@@ -154,7 +157,10 @@ export default function ProjectBasicInfo({ project, onUpdate }: ProjectBasicInfo
         </div>
         {!isEditing && (
           <button
-            onClick={() => setIsEditing(true)}
+            onClick={() => {
+              setIsEditing(true);
+              onEditingChange?.(true);
+            }}
             className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
             title="编辑"
           >

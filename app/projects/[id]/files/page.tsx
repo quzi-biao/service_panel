@@ -592,9 +592,9 @@ export default function ProjectFilesPage() {
             <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
           </div>
         ) : (
-          <div className="grid grid-cols-12 gap-4 h-[calc(100vh-100px)]">
+          <div className="grid grid-cols-12 gap-4 h-[calc(100vh-140px)]">
             {/* 桌面端文件树 */}
-            <div className="hidden md:block md:col-span-3">
+            <div className="hidden md:block md:col-span-3 h-full">
               <FileTreeNavigation
                 tree={tree}
                 selectedFile={selectedFile}
@@ -606,7 +606,7 @@ export default function ProjectFilesPage() {
             </div>
             
             {/* 文件内容查看器 */}
-            <div className="col-span-12 md:col-span-9">
+            <div className="col-span-12 md:col-span-9 h-full">
               <FileContentViewer
                 selectedFile={selectedFile}
                 fileContent={fileContent}

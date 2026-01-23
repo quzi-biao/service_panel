@@ -108,14 +108,14 @@ export default function FileTreeNavigation({
 
   return (
     <>
-      <div className="col-span-3 bg-white rounded-lg shadow overflow-auto" onClick={handleCloseContextMenu}>
-      <div className="p-4 border-b">
+      <div className="h-full bg-white rounded-lg shadow flex flex-col overflow-hidden" onClick={handleCloseContextMenu}>
+      <div className="p-4 border-b flex-shrink-0">
         <h2 className="font-semibold text-gray-900">文件列表</h2>
         <p className="text-sm text-gray-500 mt-1">
           共 {filesCount} 个文件
         </p>
       </div>
-      <div className="p-2">
+      <div className="flex-1 overflow-auto p-2">
         {tree.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <p>暂无文件</p>

@@ -27,6 +27,7 @@ export default function ProjectsPage() {
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [showTypeManagement, setShowTypeManagement] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [projectFormData, setProjectFormData] = useState<ProjectBasicInput>({
     name: '',
     project_type: '',
@@ -167,17 +168,23 @@ export default function ProjectsPage() {
       <div className="mb-6 pb-6 border-b border-gray-200">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <ProjectBasicInfo project={project} onUpdate={handleUpdateBasicInfo} />
+            <ProjectBasicInfo 
+              project={project} 
+              onUpdate={handleUpdateBasicInfo}
+              onEditingChange={setIsEditing}
+            />
           </div>
-          <button
-            onClick={() => router.push(`/projects/${currentProjectId}/files`)}
-            className="ml-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm flex items-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-            </svg>
-            <span className="hidden sm:inline">查看文件</span>
-          </button>
+          {!isEditing && (
+            <button
+              onClick={() => router.push(`/projects/${currentProjectId}/files`)}
+              className="ml-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+              </svg>
+              <span className="hidden sm:inline">查看文件</span>
+            </button>
+          )}
         </div>
       </div>
     );

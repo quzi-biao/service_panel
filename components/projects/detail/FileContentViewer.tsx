@@ -139,7 +139,7 @@ export default function FileContentViewer({
   const [showThemeSelector, setShowThemeSelector] = useState(false);
   
   return (
-    <div className="col-span-9 bg-white rounded-lg shadow flex flex-col overflow-hidden">
+    <div className="h-full bg-white rounded-lg shadow flex flex-col overflow-hidden">
       {selectedFile ? (
         <>
           {/* 固定的标题栏 */}
