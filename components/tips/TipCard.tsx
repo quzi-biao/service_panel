@@ -141,7 +141,7 @@ export default function TipCard({ tip, onUpdate, onDelete }: TipCardProps) {
       ) : (
         <>
           <div className="mb-3">
-            <p className="text-gray-900 whitespace-pre-wrap break-words">
+            <p className="text-sm text-gray-900 whitespace-pre-wrap break-words">
               {tip.content}
             </p>
           </div>
