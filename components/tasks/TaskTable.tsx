@@ -6,7 +6,7 @@ import ProjectSelector from '@/components/shared/ProjectSelector';
 
 interface Task {
   id: number;
-  task_name: string | null;
+  task_name: string;
   task_description: string | null;
   proposed_time: string;
   completed_time: string | null;
