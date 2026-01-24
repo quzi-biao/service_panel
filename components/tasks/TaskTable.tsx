@@ -20,6 +20,10 @@ interface Task {
 interface TaskTableProps {
   tasks: Task[];
   onTaskUpdate: (updatedTask: Task) => void;
+  onTaskAdd?: (taskData: any) => Promise<void>;
+  onTaskDelete?: (taskId: number) => Promise<void>;
+  isAddingTask?: boolean;
+  onCancelAdd?: () => void;
 }
 
 const COLUMN_WIDTHS = {
@@ -31,10 +35,65 @@ const COLUMN_WIDTHS = {
   completedTime: { width: '7%' },
 };
 
-export default function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
+export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete, isAddingTask = false, onCancelAdd }: TaskTableProps) {
   const [editingCell, setEditingCell] = useState<{ taskId: number; field: string } | null>(null);
   const [editValue, setEditValue] = useState('');
   const [editProjectId, setEditProjectId] = useState<number | null>(null);
+  
+  // New task row states
+  const [newTaskName, setNewTaskName] = useState('');
+  const [newTaskDescription, setNewTaskDescription] = useState('');
+  const [newTaskProjectId, setNewTaskProjectId] = useState<number | null>(null);
+  const [newTaskProjectName, setNewTaskProjectName] = useState('');
+  const [newTaskStatus, setNewTaskStatus] = useState('not_started');
+
+  const handleSaveNewTask = async () => {
+    if (!newTaskName.trim()) {
+      handleCancelNewTask();
+      return;
+    }
+
+    if (onTaskAdd) {
+      await onTaskAdd({
+        task_name: newTaskName,
+        task_description: newTaskDescription,
+        project_id: newTaskProjectId,
+        project_name: newTaskProjectName,
+        status: newTaskStatus,
+      });
+      
+      // Reset form
+      setNewTaskName('');
+      setNewTaskDescription('');
+      setNewTaskProjectId(null);
+      setNewTaskProjectName('');
+      setNewTaskStatus('not_started');
+    }
+  };
+
+  const handleCancelNewTask = () => {
+    setNewTaskName('');
+    setNewTaskDescription('');
+    setNewTaskProjectId(null);
+    setNewTaskProjectName('');
+    setNewTaskStatus('not_started');
+    if (onCancelAdd) {
+      onCancelAdd();
+    }
+  };
+
+  const handleDeleteTask = async (taskId: number) => {
+    if (!confirm('确定要删除这个任务吗？')) {
+      return;
+    }
+    
+    if (onTaskDelete) {
+      await onTaskDelete(taskId);
+      setEditingCell(null);
+      setEditValue('');
+      setEditProjectId(null);
+    }
+  };
 
   const handleCellDoubleClick = (task: Task, field: string) => {
     setEditingCell({ taskId: task.id, field });
@@ -140,6 +199,96 @@ export default function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
+          {/* New Task Row */}
+          {isAddingTask && (
+            <tr className="bg-indigo-50 border-2 border-indigo-300">
+              {/* Task Name */}
+              <td className="px-4 py-3 text-sm" style={COLUMN_WIDTHS.taskName}>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newTaskName}
+                    onChange={(e) => setNewTaskName(e.target.value)}
+                    className="flex-1 px-2 py-1 border border-indigo-500 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
+                    placeholder="输入任务名称..."
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSaveNewTask();
+                      } else if (e.key === 'Escape') {
+                        handleCancelNewTask();
+                      }
+                    }}
+                    onBlur={() => {
+                      if (!newTaskName.trim()) {
+                        handleCancelNewTask();
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={handleSaveNewTask}
+                    className="p-1 text-green-600 hover:bg-green-50 rounded flex-shrink-0"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={handleCancelNewTask}
+                    className="p-1 text-red-600 hover:bg-red-50 rounded flex-shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </td>
+
+              {/* Task Description */}
+              <td className="px-4 py-3 text-sm" style={COLUMN_WIDTHS.taskDescription}>
+                <textarea
+                  value={newTaskDescription}
+                  onChange={(e) => setNewTaskDescription(e.target.value)}
+                  className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none text-gray-900"
+                  placeholder="任务记录..."
+                  rows={1}
+                />
+              </td>
+
+              {/* Status */}
+              <td className="px-4 py-3 text-sm" style={COLUMN_WIDTHS.status}>
+                <select
+                  value={newTaskStatus}
+                  onChange={(e) => setNewTaskStatus(e.target.value)}
+                  className={`px-2 py-1.5 rounded-lg text-xs font-medium border-0 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${getStatusColor(newTaskStatus)}`}
+                >
+                  <option value="not_started">未开始</option>
+                  <option value="in_progress">进行中</option>
+                  <option value="completed">已完成</option>
+                  <option value="abandoned">已放弃</option>
+                </select>
+              </td>
+
+              {/* Project Name */}
+              <td className="px-4 py-3 text-sm" style={COLUMN_WIDTHS.projectName}>
+                <ProjectSelector
+                  value={newTaskProjectId}
+                  onChange={(id, name) => {
+                    setNewTaskProjectId(id);
+                    setNewTaskProjectName(name || '');
+                  }}
+                  placeholder="选择项目"
+                />
+              </td>
+
+              {/* Proposed Time */}
+              <td className="px-4 py-3 text-sm text-gray-400" style={COLUMN_WIDTHS.proposedTime}>
+                -
+              </td>
+
+              {/* Completed Time */}
+              <td className="px-4 py-3 text-sm text-gray-400" style={COLUMN_WIDTHS.completedTime}>
+                -
+              </td>
+            </tr>
+          )}
+
           {tasks.map((task) => (
             <tr key={task.id} className="hover:bg-gray-50">
               {/* Task Name */}
@@ -166,15 +315,24 @@ export default function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
                     />
                     <button
                       onClick={() => handleCellUpdate(task.id, 'task_name')}
-                      className="p-1 text-green-600 hover:bg-green-50 rounded"
+                      className="p-1 text-green-600 hover:bg-green-50 rounded flex-shrink-0"
                     >
                       <Check className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => setEditingCell(null)}
-                      className="p-1 text-red-600 hover:bg-red-50 rounded"
+                      className="p-1 text-gray-600 hover:bg-gray-50 rounded flex-shrink-0"
                     >
                       <X className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTask(task.id)}
+                      className="p-1 text-red-600 hover:bg-red-50 rounded flex-shrink-0"
+                      title="删除任务"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
                     </button>
                   </div>
                 ) : (

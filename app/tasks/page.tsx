@@ -45,6 +45,7 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showFilterBar, setShowFilterBar] = useState(false);
+  const [isAddingInline, setIsAddingInline] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Pagination states
@@ -101,12 +102,39 @@ export default function TasksPage() {
       const data = await response.json();
       if (data.success) {
         fetchTasks();
+        setIsAddingInline(false);
       } else {
         alert('添加任务失败: ' + data.error);
       }
     } catch (error) {
       console.error('Error adding task:', error);
       alert('添加任务失败');
+    }
+  };
+
+  const handleStartInlineAdd = () => {
+    setIsAddingInline(true);
+  };
+
+  const handleCancelInlineAdd = () => {
+    setIsAddingInline(false);
+  };
+
+  const handleDeleteTask = async (taskId: number) => {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
+      } else {
+        alert('删除任务失败: ' + data.error);
+      }
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      alert('删除任务失败');
     }
   };
 
@@ -219,7 +247,14 @@ export default function TasksPage() {
               <span className="hidden md:inline">筛选</span>
             </button>
             <button
-              onClick={() => setShowAddDialog(true)}
+              onClick={() => {
+                // Desktop: inline add, Mobile: dialog
+                if (window.innerWidth >= 768) {
+                  handleStartInlineAdd();
+                } else {
+                  setShowAddDialog(true);
+                }
+              }}
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
             >
               <Plus className="w-4 h-4" />
@@ -271,7 +306,14 @@ export default function TasksPage() {
 
             {/* Desktop Table View */}
             <div className="hidden md:block w-full bg-white rounded-lg shadow overflow-hidden">
-              <TaskTable tasks={paginatedTasks} onTaskUpdate={updateTask} />
+              <TaskTable 
+                tasks={paginatedTasks} 
+                onTaskUpdate={updateTask}
+                onTaskAdd={handleAddTask}
+                onTaskDelete={handleDeleteTask}
+                isAddingTask={isAddingInline}
+                onCancelAdd={handleCancelInlineAdd}
+              />
               
               <PaginationControls
                 currentPage={currentPage}
