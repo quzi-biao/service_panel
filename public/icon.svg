@@ -1,0 +1,60 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with gradient -->
+  <rect width="1024" height="1024" rx="230" fill="url(#gradient)"/>
+  
+  <!-- Gradient definition -->
+  <defs>
+    <linearGradient id="gradient" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
+    </linearGradient>
+    
+    <!-- Shadow filter -->
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="8"/>
+      <feOffset dx="0" dy="4" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Main panel icon -->
+  <g filter="url(#shadow)">
+    <!-- Dashboard grid -->
+    <rect x="220" y="220" width="584" height="584" rx="40" fill="white" opacity="0.95"/>
+    
+    <!-- Top bar -->
+    <rect x="260" y="260" width="504" height="60" rx="12" fill="#6366f1" opacity="0.2"/>
+    <circle cx="300" cy="290" r="12" fill="#6366f1"/>
+    <circle cx="340" cy="290" r="12" fill="#6366f1"/>
+    <circle cx="380" cy="290" r="12" fill="#6366f1"/>
+    
+    <!-- Grid items -->
+    <!-- Row 1 -->
+    <rect x="260" y="360" width="220" height="140" rx="16" fill="#6366f1" opacity="0.15"/>
+    <rect x="260" y="360" width="220" height="40" rx="16" fill="#6366f1" opacity="0.3"/>
+    
+    <rect x="520" y="360" width="244" height="140" rx="16" fill="#6366f1" opacity="0.15"/>
+    <rect x="520" y="360" width="244" height="40" rx="16" fill="#6366f1" opacity="0.3"/>
+    
+    <!-- Row 2 -->
+    <rect x="260" y="540" width="220" height="140" rx="16" fill="#6366f1" opacity="0.15"/>
+    <rect x="260" y="540" width="220" height="40" rx="16" fill="#6366f1" opacity="0.3"/>
+    
+    <rect x="520" y="540" width="244" height="140" rx="16" fill="#6366f1" opacity="0.15"/>
+    <rect x="520" y="540" width="244" height="40" rx="16" fill="#6366f1" opacity="0.3"/>
+    
+    <!-- Bottom status bar -->
+    <rect x="260" y="720" width="504" height="44" rx="12" fill="#6366f1" opacity="0.1"/>
+    <rect x="280" y="732" width="120" height="20" rx="10" fill="#10b981"/>
+    <rect x="420" y="732" width="80" height="20" rx="10" fill="#6366f1" opacity="0.3"/>
+  </g>
+  
+  <!-- Accent dot (top right) -->
+  <circle cx="880" cy="144" r="24" fill="white" opacity="0.3"/>
+</svg>
