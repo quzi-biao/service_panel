@@ -24,4 +24,20 @@ body {
   .text-balance {
     text-wrap: balance;
   }
+  
+  .tooltip-instant[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    z-index: 50;
+    margin-bottom: 0.5rem;
+    pointer-events: none;
+  }
 }

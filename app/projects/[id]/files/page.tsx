@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Loader2, RefreshCw, Menu } from 'lucide-react';
+import { Loader2, RefreshCw, Menu, Palette } from 'lucide-react';
 import FileTreeNavigation from '@/components/projects/detail/FileTreeNavigation';
 import FileContentViewer from '@/components/projects/detail/FileContentViewer';
 import MobileFileSidebar from '@/components/projects/detail/MobileFileSidebar';
@@ -43,11 +43,134 @@ export default function ProjectFilesPage() {
   const [syncingAll, setSyncingAll] = useState(false);
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set(['/']));
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [openTabs, setOpenTabs] = useState<ProjectFile[]>([]);
+  const [activeTabIndex, setActiveTabIndex] = useState<number>(0);
+  const [selectedTheme, setSelectedTheme] = useState<string>('VS Light');
+  const [showThemeSelector, setShowThemeSelector] = useState(false);
+
+  const themes = {
+    'VS Code Dark': 'vscDarkPlus',
+    'One Dark': 'oneDark',
+    'Atom Dark': 'atomDark',
+    'Tomorrow': 'tomorrow',
+    'Okaidia': 'okaidia',
+    'Solarized Light': 'solarizedlight',
+    'VS Light': 'vs',
+    'Material Light': 'materialLight',
+    'Material Dark': 'materialDark',
+    'Dracula': 'dracula',
+  };
 
   useEffect(() => {
     fetchProject();
     fetchFiles();
+    loadOpenTabs();
   }, [projectId]);
+
+  const loadOpenTabs = () => {
+    try {
+      const stored = localStorage.getItem(`openTabs_${projectId}`);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setOpenTabs(parsed.tabs || []);
+        setActiveTabIndex(parsed.activeIndex || 0);
+        // Load content for the active tab
+        if (parsed.tabs && parsed.tabs.length > 0) {
+          const activeFile = parsed.tabs[parsed.activeIndex || 0];
+          if (activeFile) {
+            setSelectedFile(activeFile);
+            loadFileContent(activeFile);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading open tabs:', error);
+    }
+  };
+
+  const saveOpenTabs = (tabs: ProjectFile[], activeIndex: number) => {
+    try {
+      localStorage.setItem(`openTabs_${projectId}`, JSON.stringify({ tabs, activeIndex }));
+    } catch (error) {
+      console.error('Error saving open tabs:', error);
+    }
+  };
+
+  const addOrSwitchToTab = (file: ProjectFile) => {
+    const existingIndex = openTabs.findIndex(f => f.id === file.id);
+    if (existingIndex >= 0) {
+      // Tab already exists, just switch to it
+      setActiveTabIndex(existingIndex);
+      setSelectedFile(file);
+      saveOpenTabs(openTabs, existingIndex);
+    } else {
+      // Add new tab
+      const newTabs = [...openTabs, file];
+      const newIndex = newTabs.length - 1;
+      setOpenTabs(newTabs);
+      setActiveTabIndex(newIndex);
+      setSelectedFile(file);
+      saveOpenTabs(newTabs, newIndex);
+    }
+  };
+
+  const closeTab = (index: number, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    const newTabs = openTabs.filter((_, i) => i !== index);
+    let newActiveIndex = activeTabIndex;
+    
+    if (index === activeTabIndex) {
+      // Closing active tab
+      if (newTabs.length === 0) {
+        setSelectedFile(null);
+        setFileContent('');
+        newActiveIndex = 0;
+      } else if (index >= newTabs.length) {
+        newActiveIndex = newTabs.length - 1;
+        setSelectedFile(newTabs[newActiveIndex]);
+        loadFileContent(newTabs[newActiveIndex]);
+      } else {
+        setSelectedFile(newTabs[newActiveIndex]);
+        loadFileContent(newTabs[newActiveIndex]);
+      }
+    } else if (index < activeTabIndex) {
+      newActiveIndex = activeTabIndex - 1;
+    }
+    
+    setOpenTabs(newTabs);
+    setActiveTabIndex(newActiveIndex);
+    saveOpenTabs(newTabs, newActiveIndex);
+  };
+
+  const switchTab = (index: number) => {
+    setActiveTabIndex(index);
+    const file = openTabs[index];
+    setSelectedFile(file);
+    loadFileContent(file);
+    saveOpenTabs(openTabs, index);
+  };
+
+  const loadFileContent = async (file: ProjectFile) => {
+    setLoadingContent(true);
+    setFileContent('');
+    try {
+      const response = await fetch(`/api/projects/${projectId}/files/${file.id}/content`);
+      const data = await response.json();
+      
+      if (data.error) {
+        setFileContent(`错误: ${data.error}\n${data.message || ''}`);
+      } else {
+        setFileContent(data.content);
+      }
+    } catch (error) {
+      console.error('Error fetching file content:', error);
+      setFileContent('加载文件内容失败');
+    } finally {
+      setLoadingContent(false);
+    }
+  };
 
   const fetchProject = async () => {
     try {
@@ -276,25 +399,8 @@ export default function ProjectFilesPage() {
       return;
     }
 
-    setSelectedFile(file);
-    setLoadingContent(true);
-    setFileContent('');
-
-    try {
-      const response = await fetch(`/api/projects/${projectId}/files/${file.id}/content`);
-      const data = await response.json();
-      
-      if (data.error) {
-        setFileContent(`错误: ${data.error}\n${data.message || ''}`);
-      } else {
-        setFileContent(data.content);
-      }
-    } catch (error) {
-      console.error('Error fetching file content:', error);
-      setFileContent('加载文件内容失败');
-    } finally {
-      setLoadingContent(false);
-    }
+    addOrSwitchToTab(file);
+    loadFileContent(file);
   };
 
   const deleteFile = async (file: ProjectFile) => {
@@ -546,6 +652,35 @@ export default function ProjectFilesPage() {
               <Menu className="w-5 h-5" />
             </button>
             
+            {/* 主题选择器 */}
+            <div className="relative">
+              <button
+                onClick={() => setShowThemeSelector(!showThemeSelector)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+              >
+                <Palette className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">{selectedTheme}</span>
+              </button>
+              {showThemeSelector && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-80 overflow-auto">
+                  {Object.keys(themes).map((themeName) => (
+                    <button
+                      key={themeName}
+                      onClick={() => {
+                        setSelectedTheme(themeName);
+                        setShowThemeSelector(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
+                        selectedTheme === themeName ? 'bg-indigo-50 text-indigo-600 font-medium' : 'text-gray-700'
+                      }`}
+                    >
+                      {themeName}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            
             {/* 桌面端扫描和同步按钮 */}
             <button
               onClick={scanFiles}
@@ -607,13 +742,43 @@ export default function ProjectFilesPage() {
               />
             </div>
             
-            {/* 文件内容查看器 */}
-            <div className="col-span-12 md:col-span-9 h-full">
-              <FileContentViewer
-                selectedFile={selectedFile}
-                fileContent={fileContent}
-                loadingContent={loadingContent}
-              />
+            {/* 文件内容查看器带标签页 */}
+            <div className="col-span-12 md:col-span-9 h-full flex flex-col">
+              {/* 标签页 */}
+              {openTabs.length > 0 && (
+                <div className="bg-white border-b border-gray-200 flex items-center overflow-x-auto">
+                  {openTabs.map((tab, index) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => switchTab(index)}
+                      className={`flex items-center gap-2 px-4 py-2 border-r border-gray-200 hover:bg-gray-50 transition-colors flex-shrink-0 ${
+                        index === activeTabIndex ? 'bg-indigo-50 border-b-2 border-b-indigo-600' : ''
+                      }`}
+                    >
+                      <span className="text-sm text-gray-900 truncate max-w-[150px]">{tab.file_name}</span>
+                      <button
+                        onClick={(e) => closeTab(index, e)}
+                        className="text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded p-0.5"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {/* 文件内容 */}
+              <div className="flex-1 overflow-hidden">
+                <FileContentViewer
+                  selectedFile={selectedFile}
+                  fileContent={fileContent}
+                  loadingContent={loadingContent}
+                  theme={selectedTheme as any}
+                  className='rounded-t-none border-t-0'
+                />
+              </div>
             </div>
           </div>
         )}

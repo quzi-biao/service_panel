@@ -145,10 +145,10 @@ export default function FileTreeNavigation({
       <div className="p-4 border-b flex-shrink-0">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="font-semibold text-gray-900">文件列表</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              共 {filesCount} 个文件
-            </p>
+            <h2 className="font-semibold text-gray-900">
+              文件列表
+              <span className='text-sm font-normal text-gray-400'>({filesCount} 个文件)</span>
+            </h2>
           </div>
           {onNavigateToGraph && (
             <button
