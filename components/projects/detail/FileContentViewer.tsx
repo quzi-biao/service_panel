@@ -179,7 +179,10 @@ export default function FileContentViewer({
                   margin: 0,
                   fontSize: '0.875rem',
                   maxHeight: '100%',
-                  border: '1px #f6f6f6 solid'
+                  border: '1px #f6f6f6 solid',
+                  borderBottom: 'none',
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none'
                 }}
                 codeTagProps={{
                   style: {

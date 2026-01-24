@@ -66,12 +66,12 @@ export default function MobileFileSidebar({
 
       {/* 侧边栏 */}
       <div
-        className={`fixed top-0 left-0 h-full w-80 bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out md:hidden ${
+        className={`fixed top-0 left-0 h-full w-80 bg-white z-50 transform transition-transform duration-300 ease-in-out md:hidden ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* 顶部标题栏 */}
-        <div className="flex items-center justify-between p-4 border-b bg-gray-50">
+        {/* <div className="flex items-center justify-between p-4 border-b bg-gray-50">
           <h2 className="font-semibold text-gray-900">文件列表</h2>
           <button
             onClick={onClose}
@@ -79,15 +79,10 @@ export default function MobileFileSidebar({
           >
             <X className="w-5 h-5 text-gray-600" />
           </button>
-        </div>
+        </div> */}
 
         {/* 文件树内容 */}
         <div className="h-[calc(100%-64px)] overflow-auto">
-          <div className="p-4 border-b bg-gray-50">
-            <p className="text-sm text-gray-500">
-              共 {filesCount} 个文件
-            </p>
-          </div>
           <div className="p-2">
             {tree.length === 0 ? (
               <div className="text-center py-8 text-gray-500">

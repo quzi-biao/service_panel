@@ -141,7 +141,7 @@ export default function FileTreeNavigation({
 
   return (
     <>
-      <div className="h-full bg-white rounded-lg shadow flex flex-col overflow-hidden" onClick={handleCloseContextMenu}>
+      <div className="h-full bg-white rounded-lg flex flex-col overflow-hidden" onClick={handleCloseContextMenu}>
       <div className="p-4 border-b flex-shrink-0">
         <div className="flex items-center justify-between">
           <div>
