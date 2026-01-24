@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
-import { Server, FolderGit2 } from 'lucide-react';
+import { Server, FolderGit2, CheckSquare } from 'lucide-react';
 
 interface HeaderProps {
   children?: React.ReactNode;
@@ -15,6 +15,7 @@ export default function Header({ children, leftContent, rightContent }: HeaderPr
 
   const isServicesActive = pathname === '/';
   const isProjectsActive = pathname?.startsWith('/projects');
+  const isTasksActive = pathname?.startsWith('/tasks');
 
   return (
     <header className="bg-black backdrop-blur-md shadow-lg border-b border-gray-800 sticky top-0 z-50">
@@ -25,10 +26,6 @@ export default function Header({ children, leftContent, rightContent }: HeaderPr
               leftContent
             ) : (
               <>
-                <h1 className="text-xl font-bold text-white hidden md:block">
-                  服务面板
-                </h1>
-                
                 <nav className="flex items-center gap-6">
                   <button
                     onClick={() => router.push('/')}
@@ -52,6 +49,18 @@ export default function Header({ children, leftContent, rightContent }: HeaderPr
                   >
                     <FolderGit2 className="w-4 h-4" />
                     <span className="font-medium hidden md:inline">项目管理</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => router.push('/tasks')}
+                    className={`flex items-center gap-2 transition-colors ${
+                      isTasksActive
+                        ? 'text-white'
+                        : 'text-gray-400 hover:text-gray-200'
+                    }`}
+                  >
+                    <CheckSquare className="w-4 h-4" />
+                    <span className="font-medium hidden md:inline">任务管理</span>
                   </button>
                 </nav>
               </>
