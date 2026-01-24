@@ -18,7 +18,7 @@ interface Task {
 
 interface TaskCardViewProps {
   tasks: Task[];
-  onTaskUpdate: () => void;
+  onTaskUpdate: (updatedTask: Task) => void;
 }
 
 export default function TaskCardView({ tasks, onTaskUpdate }: TaskCardViewProps) {

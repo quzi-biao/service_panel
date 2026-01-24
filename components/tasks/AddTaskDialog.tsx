@@ -1,12 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X } from 'lucide-react';
-
-interface Project {
-  id: number;
-  name: string;
-}
+import ProjectSelector from '@/components/shared/ProjectSelector';
 
 interface AddTaskDialogProps {
   isOpen: boolean;
@@ -26,25 +22,6 @@ export default function AddTaskDialog({ isOpen, onClose, onSubmit }: AddTaskDial
   const [projectId, setProjectId] = useState<number | null>(null);
   const [projectName, setProjectName] = useState('');
   const [status, setStatus] = useState('not_started');
-  const [projects, setProjects] = useState<Project[]>([]);
-
-  useEffect(() => {
-    if (isOpen) {
-      fetchProjects();
-    }
-  }, [isOpen]);
-
-  const fetchProjects = async () => {
-    try {
-      const response = await fetch('/api/projects');
-      const data = await response.json();
-      if (data.success) {
-        setProjects(data.projects);
-      }
-    } catch (error) {
-      console.error('Error fetching projects:', error);
-    }
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,20 +40,6 @@ export default function AddTaskDialog({ isOpen, onClose, onSubmit }: AddTaskDial
     setProjectName('');
     setStatus('not_started');
     onClose();
-  };
-
-  const handleProjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedId = e.target.value ? parseInt(e.target.value) : null;
-    setProjectId(selectedId);
-    
-    if (selectedId) {
-      const selectedProject = projects.find(p => p.id === selectedId);
-      if (selectedProject) {
-        setProjectName(selectedProject.name);
-      }
-    } else {
-      setProjectName('');
-    }
   };
 
   if (!isOpen) return null;
@@ -127,18 +90,14 @@ export default function AddTaskDialog({ isOpen, onClose, onSubmit }: AddTaskDial
             <label className="block text-sm font-medium text-gray-700 mb-2">
               关联项目
             </label>
-            <select
-              value={projectId || ''}
-              onChange={handleProjectChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
-            >
-              <option value="">无关联项目</option>
-              {projects.map((project) => (
-                <option key={project.id} value={project.id}>
-                  {project.name}
-                </option>
-              ))}
-            </select>
+            <ProjectSelector
+              value={projectId}
+              onChange={(id, name) => {
+                setProjectId(id);
+                setProjectName(name || '');
+              }}
+              placeholder="选择关联项目"
+            />
           </div>
 
           <div>

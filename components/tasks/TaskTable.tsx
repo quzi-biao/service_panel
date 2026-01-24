@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Check, X } from 'lucide-react';
+import ProjectSelector from '@/components/shared/ProjectSelector';
 
 interface Task {
   id: number;
@@ -18,7 +19,7 @@ interface Task {
 
 interface TaskTableProps {
   tasks: Task[];
-  onTaskUpdate: () => void;
+  onTaskUpdate: (updatedTask: Task) => void;
 }
 
 const COLUMN_WIDTHS = {
@@ -33,6 +34,7 @@ const COLUMN_WIDTHS = {
 export default function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
   const [editingCell, setEditingCell] = useState<{ taskId: number; field: string } | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [editProjectId, setEditProjectId] = useState<number | null>(null);
 
   const handleCellDoubleClick = (task: Task, field: string) => {
     setEditingCell({ taskId: task.id, field });
@@ -42,6 +44,7 @@ export default function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
     } else if (field === 'task_description') {
       setEditValue(task.task_description || '');
     } else if (field === 'project_name') {
+      setEditProjectId(task.project_id);
       setEditValue(task.project_name || '');
     }
   };
@@ -55,6 +58,7 @@ export default function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
       } else if (field === 'task_description') {
         updateData.task_description = editValue;
       } else if (field === 'project_name') {
+        updateData.project_id = editProjectId;
         updateData.project_name = editValue;
       }
 
@@ -65,8 +69,8 @@ export default function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
       });
 
       const data = await response.json();
-      if (data.success) {
-        onTaskUpdate();
+      if (data.success && data.task) {
+        onTaskUpdate(data.task);
       } else {
         alert('更新任务失败: ' + data.error);
       }
@@ -76,6 +80,7 @@ export default function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
     } finally {
       setEditingCell(null);
       setEditValue('');
+      setEditProjectId(null);
     }
   };
 
@@ -246,8 +251,8 @@ export default function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
                         body: JSON.stringify({ status: newStatus }),
                       });
                       const data = await response.json();
-                      if (data.success) {
-                        onTaskUpdate();
+                      if (data.success && data.task) {
+                        onTaskUpdate(data.task);
                       } else {
                         alert('更新状态失败: ' + data.error);
                       }
@@ -272,29 +277,25 @@ export default function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
               >
                 {editingCell?.taskId === task.id && editingCell?.field === 'project_name' ? (
                   <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      className="flex-1 w-[50px] px-2 py-1 border border-indigo-500 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      autoFocus
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          handleCellUpdate(task.id, 'project_name');
-                        } else if (e.key === 'Escape') {
-                          setEditingCell(null);
-                        }
-                      }}
-                    />
+                    <div className="flex-1 min-w-0">
+                      <ProjectSelector
+                        value={editProjectId}
+                        onChange={(id, name) => {
+                          setEditProjectId(id);
+                          setEditValue(name || '');
+                        }}
+                        placeholder="选择项目"
+                      />
+                    </div>
                     <button
                       onClick={() => handleCellUpdate(task.id, 'project_name')}
-                      className="p-1 text-green-600 hover:bg-green-50 rounded"
+                      className="p-1 text-green-600 hover:bg-green-50 rounded flex-shrink-0"
                     >
                       <Check className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => setEditingCell(null)}
-                      className="p-1 text-red-600 hover:bg-red-50 rounded"
+                      className="p-1 text-red-600 hover:bg-red-50 rounded flex-shrink-0"
                     >
                       <X className="w-4 h-4" />
                     </button>

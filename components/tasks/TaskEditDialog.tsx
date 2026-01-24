@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import StatusSelector from './StatusSelector';
+import ProjectSelector from '@/components/shared/ProjectSelector';
 
 interface Task {
   id: number;
@@ -21,12 +22,13 @@ interface TaskEditDialogProps {
   task: Task | null;
   isOpen: boolean;
   onClose: () => void;
-  onUpdate: () => void;
+  onUpdate: (updatedTask: Task) => void;
 }
 
 export default function TaskEditDialog({ task, isOpen, onClose, onUpdate }: TaskEditDialogProps) {
   const [taskName, setTaskName] = useState('');
   const [taskDescription, setTaskDescription] = useState('');
+  const [projectId, setProjectId] = useState<number | null>(null);
   const [projectName, setProjectName] = useState('');
   const [status, setStatus] = useState<string>('not_started');
 
@@ -34,6 +36,7 @@ export default function TaskEditDialog({ task, isOpen, onClose, onUpdate }: Task
     if (task) {
       setTaskName(task.task_name || '');
       setTaskDescription(task.task_description || '');
+      setProjectId(task.project_id);
       setProjectName(task.project_name || '');
       setStatus(task.status);
     }
@@ -51,14 +54,15 @@ export default function TaskEditDialog({ task, isOpen, onClose, onUpdate }: Task
         body: JSON.stringify({
           task_name: taskName,
           task_description: taskDescription,
+          project_id: projectId,
           project_name: projectName,
           status,
         }),
       });
 
       const data = await response.json();
-      if (data.success) {
-        onUpdate();
+      if (data.success && data.task) {
+        onUpdate(data.task);
         onClose();
       } else {
         alert('更新任务失败: ' + data.error);
@@ -140,6 +144,20 @@ export default function TaskEditDialog({ task, isOpen, onClose, onUpdate }: Task
               rows={6}
             />
           </div>
+                    {/* Project Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              关联项目
+            </label>
+            <ProjectSelector
+              value={projectId}
+              onChange={(id, name) => {
+                setProjectId(id);
+                setProjectName(name || '');
+              }}
+              placeholder="选择关联项目"
+            />
+          </div>
 
           {/* Status */}
           <div>
@@ -149,20 +167,6 @@ export default function TaskEditDialog({ task, isOpen, onClose, onUpdate }: Task
             <StatusSelector
               value={status}
               onChange={setStatus}
-            />
-          </div>
-
-          {/* Project Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              关联项目
-            </label>
-            <input
-              type="text"
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
-              placeholder="请输入关联项目"
             />
           </div>
 

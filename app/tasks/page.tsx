@@ -81,6 +81,14 @@ export default function TasksPage() {
     }
   };
 
+  const updateTask = (updatedTask: Task) => {
+    setTasks(prevTasks => 
+      prevTasks.map(task => 
+        task.id === updatedTask.id ? updatedTask : task
+      )
+    );
+  };
+
 
   const handleAddTask = async (taskData: any) => {
     try {
@@ -263,7 +271,7 @@ export default function TasksPage() {
 
             {/* Desktop Table View */}
             <div className="hidden md:block w-full bg-white rounded-lg shadow overflow-hidden">
-              <TaskTable tasks={paginatedTasks} onTaskUpdate={fetchTasks} />
+              <TaskTable tasks={paginatedTasks} onTaskUpdate={updateTask} />
               
               <PaginationControls
                 currentPage={currentPage}
@@ -277,7 +285,7 @@ export default function TasksPage() {
 
             {/* Mobile Card View */}
             <div className="md:hidden">
-              <TaskCardView tasks={paginatedTasks} onTaskUpdate={fetchTasks} />
+              <TaskCardView tasks={paginatedTasks} onTaskUpdate={updateTask} />
               
               <div className="mt-4 bg-white rounded-lg shadow overflow-hidden">
                 <PaginationControls

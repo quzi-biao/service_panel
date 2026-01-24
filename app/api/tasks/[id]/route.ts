@@ -59,7 +59,13 @@ export async function PUT(
     
     await query(sql, values);
 
-    return NextResponse.json({ success: true });
+    // Fetch and return the updated task
+    const updatedTask = await query('SELECT * FROM tasks WHERE id = ?', [taskId]);
+    
+    return NextResponse.json({ 
+      success: true, 
+      task: updatedTask[0] 
+    });
   } catch (error) {
     console.error('Error updating task:', error);
     return NextResponse.json(
