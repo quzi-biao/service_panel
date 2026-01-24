@@ -743,14 +743,15 @@ export default function ProjectFilesPage() {
             </div>
             
             {/* 文件内容查看器带标签页 */}
-            <div className="col-span-12 md:col-span-9 h-full flex flex-col">
+            <div className="col-span-12 md:col-span-9 h-full flex flex-col rounded-lg overflow-hidden">
               {/* 标签页 */}
               {openTabs.length > 0 && (
-                <div className="bg-white border-b border-gray-200 flex items-center overflow-x-auto">
+                <div className="bg-white border-t border-l border-r border-[#f6f6f6] flex items-center overflow-x-auto">
                   {openTabs.map((tab, index) => (
                     <button
                       key={tab.id}
                       onClick={() => switchTab(index)}
+                      title={tab.file_path}
                       className={`flex items-center gap-2 px-4 py-2 border-r border-gray-200 hover:bg-gray-50 transition-colors flex-shrink-0 ${
                         index === activeTabIndex ? 'bg-indigo-50 border-b-2 border-b-indigo-600' : ''
                       }`}
