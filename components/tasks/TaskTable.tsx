@@ -293,7 +293,7 @@ export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete
             <tr key={task.id} className="hover:bg-gray-50">
               {/* Task Name */}
               <td
-                className="px-4 py-3 text-sm text-gray-900 cursor-pointer"
+                className="px-4 py-1 text-sm text-gray-900 cursor-pointer"
                 style={COLUMN_WIDTHS.taskName}
                 onDoubleClick={() => handleCellDoubleClick(task, 'task_name')}
               >
@@ -342,8 +342,8 @@ export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete
 
               {/* Task Description */}
               <td
-                className="px-4 py-3 text-sm text-gray-600 cursor-pointer"
-                style={COLUMN_WIDTHS.taskDescription}
+                className="px-4 py-1 text-sm text-gray-600 cursor-pointer"
+                style={{...COLUMN_WIDTHS.taskDescription, wordBreak: 'break-word', overflowWrap: 'break-word'}}
                 onDoubleClick={() => handleCellDoubleClick(task, 'task_description')}
                 title={task.task_description || ''}
               >
@@ -389,13 +389,13 @@ export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete
                     </button>
                   </div>
                 ) : (
-                  <span className="whitespace-pre-wrap">{task.task_description || '-'}</span>
+                  <span className="whitespace-pre-wrap break-words">{task.task_description || '-'}</span>
                 )}
               </td>
 
               {/* Status */}
               <td
-                className="px-4 py-3 text-sm"
+                className="px-4 py-1 text-sm"
                 style={COLUMN_WIDTHS.status}
               >
                 <select
@@ -429,7 +429,7 @@ export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete
               </td>
               {/* Project Name */}
               <td
-                className="px-4 py-3 text-sm text-gray-600 cursor-pointer"
+                className="px-4 py-1 text-sm text-gray-600 cursor-pointer"
                 style={COLUMN_WIDTHS.projectName}
                 onDoubleClick={() => handleCellDoubleClick(task, 'project_name')}
               >
@@ -464,12 +464,12 @@ export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete
               </td>
 
               {/* Proposed Time */}
-              <td className="px-4 py-3 text-sm text-gray-600" style={COLUMN_WIDTHS.proposedTime}>
+              <td className="px-4 py-1 text-sm text-gray-600" style={COLUMN_WIDTHS.proposedTime}>
                 {formatDate(task.proposed_time)}
               </td>
 
               {/* Completed Time */}
-              <td className="px-4 py-3 text-sm text-gray-600" style={COLUMN_WIDTHS.completedTime}>
+              <td className="px-4 py-1 text-sm text-gray-600" style={COLUMN_WIDTHS.completedTime}>
                 {formatDate(task.completed_time)}
               </td>
             </tr>
