@@ -23,8 +23,8 @@ interface TaskTableProps {
 
 const COLUMN_WIDTHS = {
   taskName: { width: '20%' },
-  taskDescription: { width: '50%' },
-  projectName: { width: '8%' },
+  taskDescription: { width: '45%' },
+  projectName: { width: '13%' },
   status: { width: '8%' },
   proposedTime: { width: '7%' },
   completedTime: { width: '7%' },
@@ -123,14 +123,14 @@ export default function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style={COLUMN_WIDTHS.status}>
               状态
             </th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style={COLUMN_WIDTHS.projectName}>
+              关联项目
+            </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style={COLUMN_WIDTHS.proposedTime}>
               提出时间
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style={COLUMN_WIDTHS.completedTime}>
               完成时间
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" style={COLUMN_WIDTHS.projectName}>
-              关联项目
             </th>
           </tr>
         </thead>
@@ -264,17 +264,6 @@ export default function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
                   <option value="abandoned">已放弃</option>
                 </select>
               </td>
-
-              {/* Proposed Time */}
-              <td className="px-4 py-3 text-sm text-gray-600" style={COLUMN_WIDTHS.proposedTime}>
-                {formatDate(task.proposed_time)}
-              </td>
-
-              {/* Completed Time */}
-              <td className="px-4 py-3 text-sm text-gray-600" style={COLUMN_WIDTHS.completedTime}>
-                {formatDate(task.completed_time)}
-              </td>
-
               {/* Project Name */}
               <td
                 className="px-4 py-3 text-sm text-gray-600 cursor-pointer"
@@ -287,7 +276,7 @@ export default function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
                       type="text"
                       value={editValue}
                       onChange={(e) => setEditValue(e.target.value)}
-                      className="flex-1 px-2 py-1 border border-indigo-500 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="flex-1 w-[50px] px-2 py-1 border border-indigo-500 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       autoFocus
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
@@ -313,6 +302,16 @@ export default function TaskTable({ tasks, onTaskUpdate }: TaskTableProps) {
                 ) : (
                   task.project_name || '-'
                 )}
+              </td>
+
+              {/* Proposed Time */}
+              <td className="px-4 py-3 text-sm text-gray-600" style={COLUMN_WIDTHS.proposedTime}>
+                {formatDate(task.proposed_time)}
+              </td>
+
+              {/* Completed Time */}
+              <td className="px-4 py-3 text-sm text-gray-600" style={COLUMN_WIDTHS.completedTime}>
+                {formatDate(task.completed_time)}
               </td>
             </tr>
           ))}

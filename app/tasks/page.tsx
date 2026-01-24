@@ -6,6 +6,7 @@ import Header from '@/components/shared/Header';
 import AddTaskDialog from '@/components/tasks/AddTaskDialog';
 import TaskFilterBar from '@/components/tasks/TaskFilterBar';
 import TaskTable from '@/components/tasks/TaskTable';
+import TaskCardView from '@/components/tasks/TaskCardView';
 import PaginationControls from '@/components/tasks/PaginationControls';
 import { Plus, Upload, Filter } from 'lucide-react';
 
@@ -260,7 +261,8 @@ export default function TasksPage() {
               />
             )}
 
-            <div className="w-full bg-white rounded-lg shadow overflow-hidden">
+            {/* Desktop Table View */}
+            <div className="hidden md:block w-full bg-white rounded-lg shadow overflow-hidden">
               <TaskTable tasks={paginatedTasks} onTaskUpdate={fetchTasks} />
               
               <PaginationControls
@@ -271,6 +273,22 @@ export default function TasksPage() {
                 totalItems={filteredTasks.length}
                 onPageChange={setCurrentPage}
               />
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden">
+              <TaskCardView tasks={paginatedTasks} onTaskUpdate={fetchTasks} />
+              
+              <div className="mt-4 bg-white rounded-lg shadow overflow-hidden">
+                <PaginationControls
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  startIndex={startIndex}
+                  endIndex={endIndex}
+                  totalItems={filteredTasks.length}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
             </div>
           </>
         )}
