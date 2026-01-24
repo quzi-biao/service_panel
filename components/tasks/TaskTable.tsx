@@ -41,6 +41,7 @@ export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete
   const [editProjectId, setEditProjectId] = useState<number | null>(null);
   
   // New task row states
+  const [isCreatingTask, setIsCreatingTask] = useState(false);
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newTaskProjectId, setNewTaskProjectId] = useState<number | null>(null);
@@ -72,6 +73,7 @@ export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete
   };
 
   const handleCancelNewTask = () => {
+    setIsCreatingTask(false);
     setNewTaskName('');
     setNewTaskDescription('');
     setNewTaskProjectId(null);
@@ -80,6 +82,10 @@ export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete
     if (onCancelAdd) {
       onCancelAdd();
     }
+  };
+
+  const handleEmptyRowDoubleClick = () => {
+    setIsCreatingTask(true);
   };
 
   const handleDeleteTask = async (taskId: number) => {
@@ -209,8 +215,109 @@ export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {/* New Task Row */}
-          {isAddingTask && (
+          {/* Empty row for quick task creation */}
+          {!isCreatingTask ? (
+            <tr 
+              className="bg-blue-50 hover:bg-blue-100 cursor-pointer transition-colors"
+              onDoubleClick={handleEmptyRowDoubleClick}
+              title="双击创建新任务"
+            >
+              <td className="px-4 py-3 text-sm text-gray-400 italic" style={COLUMN_WIDTHS.taskName}>
+                双击此行创建新任务...
+              </td>
+              <td className="px-4 py-3 text-sm" style={COLUMN_WIDTHS.taskDescription}></td>
+              <td className="px-4 py-3 text-sm" style={COLUMN_WIDTHS.status}></td>
+              <td className="px-4 py-3 text-sm" style={COLUMN_WIDTHS.projectName}></td>
+              <td className="px-4 py-3 text-sm" style={COLUMN_WIDTHS.proposedTime}></td>
+              <td className="px-4 py-3 text-sm" style={COLUMN_WIDTHS.completedTime}></td>
+            </tr>
+          ) : (
+            /* New Task Row - Editing Mode */
+            <tr className="bg-indigo-50 border-2 border-indigo-300">
+              {/* Task Name */}
+              <td className="px-4 py-3 text-sm" style={COLUMN_WIDTHS.taskName}>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newTaskName}
+                    onChange={(e) => setNewTaskName(e.target.value)}
+                    className="flex-1 px-2 py-1 border border-indigo-500 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
+                    placeholder="输入任务名称..."
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSaveNewTask();
+                      } else if (e.key === 'Escape') {
+                        handleCancelNewTask();
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={handleSaveNewTask}
+                    className="p-1 text-green-600 hover:bg-green-50 rounded flex-shrink-0"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={handleCancelNewTask}
+                    className="p-1 text-red-600 hover:bg-red-50 rounded flex-shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </td>
+
+              {/* Task Description */}
+              <td className="px-4 py-3 text-sm" style={COLUMN_WIDTHS.taskDescription}>
+                <textarea
+                  value={newTaskDescription}
+                  onChange={(e) => setNewTaskDescription(e.target.value)}
+                  className="w-full px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none text-gray-900"
+                  placeholder="任务记录..."
+                  rows={1}
+                />
+              </td>
+
+              {/* Status */}
+              <td className="px-4 py-3 text-sm" style={COLUMN_WIDTHS.status}>
+                <select
+                  value={newTaskStatus}
+                  onChange={(e) => setNewTaskStatus(e.target.value)}
+                  className={`px-2 py-1.5 rounded-lg text-xs font-medium border-0 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${getStatusColor(newTaskStatus)}`}
+                >
+                  <option value="not_started">未开始</option>
+                  <option value="in_progress">进行中</option>
+                  <option value="completed">已完成</option>
+                  <option value="abandoned">已放弃</option>
+                </select>
+              </td>
+
+              {/* Project Name */}
+              <td className="px-4 py-3 text-sm" style={COLUMN_WIDTHS.projectName}>
+                <ProjectSelector
+                  value={newTaskProjectId}
+                  onChange={(id, name) => {
+                    setNewTaskProjectId(id);
+                    setNewTaskProjectName(name || '');
+                  }}
+                  placeholder="选择项目"
+                />
+              </td>
+
+              {/* Proposed Time */}
+              <td className="px-4 py-3 text-sm text-gray-400" style={COLUMN_WIDTHS.proposedTime}>
+                -
+              </td>
+
+              {/* Completed Time */}
+              <td className="px-4 py-3 text-sm text-gray-400" style={COLUMN_WIDTHS.completedTime}>
+                -
+              </td>
+            </tr>
+          )}
+
+          {/* Legacy support for external isAddingTask prop */}
+          {isAddingTask && !isCreatingTask && (
             <tr className="bg-indigo-50 border-2 border-indigo-300">
               {/* Task Name */}
               <td className="px-4 py-3 text-sm" style={COLUMN_WIDTHS.taskName}>
@@ -299,6 +406,7 @@ export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete
             </tr>
           )}
 
+          {/* Existing tasks */}
           {tasks.map((task) => (
             <tr key={task.id} className="hover:bg-gray-50">
               {/* Task Name */}
