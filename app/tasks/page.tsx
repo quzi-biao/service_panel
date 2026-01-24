@@ -212,6 +212,26 @@ export default function TasksPage() {
       });
     }
     
+    // Sort tasks: in_progress first, then not_started, then others
+    filtered.sort((a, b) => {
+      const statusOrder: { [key: string]: number } = {
+        'in_progress': 0,
+        'not_started': 1,
+        'completed': 2,
+        'abandoned': 3,
+      };
+      
+      const orderA = statusOrder[a.status] ?? 4;
+      const orderB = statusOrder[b.status] ?? 4;
+      
+      if (orderA !== orderB) {
+        return orderA - orderB;
+      }
+      
+      // If same status, sort by proposed_time descending (newest first)
+      return new Date(b.proposed_time).getTime() - new Date(a.proposed_time).getTime();
+    });
+    
     setFilteredTasks(filtered);
     setCurrentPage(1); // Reset to first page when filters change
   };

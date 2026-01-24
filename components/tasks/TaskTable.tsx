@@ -153,6 +153,16 @@ export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete
     return statusMap[status] || status;
   };
 
+  const getTaskNameColor = (status: string) => {
+    const colorMap: { [key: string]: string } = {
+      'not_started': 'text-blue-600',
+      'in_progress': 'text-red-600',
+      'completed': 'text-gray-900',
+      'abandoned': 'text-gray-900',
+    };
+    return colorMap[status] || 'text-gray-900';
+  };
+
   const getStatusColor = (status: string) => {
     const colorMap: { [key: string]: string } = {
       'not_started': 'bg-gray-100 text-gray-800',
@@ -336,7 +346,7 @@ export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete
                     </button>
                   </div>
                 ) : (
-                  <span className="font-medium">{task.task_name}</span>
+                  <span className={`font-medium ${getTaskNameColor(task.status)}`}>{task.task_name}</span>
                 )}
               </td>
 
