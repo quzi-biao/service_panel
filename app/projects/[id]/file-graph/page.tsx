@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/shared/Header';
 import FileContentViewer from '@/components/projects/detail/FileContentViewer';
+import MobileFileDrawer from '@/components/projects/detail/MobileFileDrawer';
 import { ArrowLeft, RefreshCw, Loader2, X } from 'lucide-react';
 
 declare global {
@@ -335,32 +336,48 @@ export default function FileGraphPage() {
             <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
           </div>
         ) : graphData && graphData.nodes.length > 0 ? (
-          <div className="flex gap-4">
-            <div className={`bg-white rounded-lg shadow p-4 transition-all duration-300 ${showSidePanel ? 'w-2/3' : 'w-full'}`}>
-              <div className="mb-4">
-                <p className="text-sm text-gray-600">
-                  节点数: {graphData.nodes.length} | 关系数: {graphData.links.length}
-                </p>
+          <>
+            <div className="flex gap-4">
+              <div className={`bg-white rounded-lg shadow p-4 transition-all duration-300 ${showSidePanel ? 'md:w-2/3 w-full' : 'w-full'}`}>
+                <div className="mb-4">
+                  <p className="text-sm text-gray-600">
+                    节点数: {graphData.nodes.length} | 关系数: {graphData.links.length}
+                  </p>
+                </div>
+                <div ref={chartRef} className="w-full overflow-hidden" style={{ height: 'calc(100vh - 190px)' }} />
               </div>
-              <div ref={chartRef} className="w-full overflow-hidden" style={{ height: 'calc(100vh - 190px)' }} />
+
+              {/* 桌面端侧边栏 */}
+              {showSidePanel && (
+                <div className="hidden md:block md:w-1/3" style={{ height: 'calc(100vh - 120px)' }}>
+                  <FileContentViewer
+                    selectedFile={selectedFile}
+                    fileContent={fileContent}
+                    loadingContent={loadingContent}
+                    showCloseButton={true}
+                    onClose={() => {
+                      setShowSidePanel(false);
+                      setSelectedFile(null);
+                      setFileContent('');
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
-            {showSidePanel && (
-              <div className="w-1/3" style={{ height: 'calc(100vh - 120px)' }}>
-                <FileContentViewer
-                  selectedFile={selectedFile}
-                  fileContent={fileContent}
-                  loadingContent={loadingContent}
-                  showCloseButton={true}
-                  onClose={() => {
-                    setShowSidePanel(false);
-                    setSelectedFile(null);
-                    setFileContent('');
-                  }}
-                />
-              </div>
-            )}
-          </div>
+            {/* 移动端底部弹窗 */}
+            <MobileFileDrawer
+              isOpen={showSidePanel}
+              selectedFile={selectedFile}
+              fileContent={fileContent}
+              loadingContent={loadingContent}
+              onClose={() => {
+                setShowSidePanel(false);
+                setSelectedFile(null);
+                setFileContent('');
+              }}
+            />
+          </>
         ) : (
           <div className="flex items-center justify-center h-[calc(100vh-160px)]">
             <div className="text-center">
