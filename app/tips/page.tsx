@@ -5,6 +5,7 @@ import { Plus } from 'lucide-react';
 import Header from '@/components/shared/Header';
 import TipCard from '@/components/tips/TipCard';
 import AddTipDialog from '@/components/tips/AddTipDialog';
+import { useLocalCache } from '@/hooks/useLocalCache';
 
 interface Tip {
   id: number;
@@ -18,6 +19,31 @@ export default function TipsPage() {
   const [tips, setTips] = useState<Tip[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  
+  // Local cache with async sync
+  const { updateItem, updateItems, syncNow } = useLocalCache<Tip>({
+    storageKey: 'tips-cache',
+    syncInterval: 10000, // 10 seconds
+    onSync: async (dirtyTips) => {
+      // Batch sync dirty tips to server
+      for (const tip of dirtyTips) {
+        try {
+          await fetch(`/api/tips/${tip.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: tip.content,
+              tags: tip.tags,
+            }),
+          });
+        } catch (error) {
+          console.error(`Failed to sync tip ${tip.id}:`, error);
+          throw error; // Re-throw to mark as failed
+        }
+      }
+    },
+    autoSync: true,
+  });
 
   useEffect(() => {
     fetchTips();
@@ -30,6 +56,8 @@ export default function TipsPage() {
       const data = await response.json();
       if (data.success) {
         setTips(data.tips);
+        // Initialize cache with server data (mark as clean)
+        updateItems(data.tips, false);
       }
     } catch (error) {
       console.error('Error fetching tips:', error);
@@ -58,12 +86,21 @@ export default function TipsPage() {
     }
   };
 
-  const handleUpdateTip = (updatedTip: Tip) => {
+  const handleUpdateTip = (updatedTip: Tip, syncImmediately: boolean = false) => {
+    // Update local state immediately
     setTips(prevTips =>
       prevTips.map(tip =>
         tip.id === updatedTip.id ? updatedTip : tip
       )
     );
+    
+    // Update cache (mark as dirty for async sync)
+    updateItem(updatedTip, true);
+    
+    // If user explicitly saves, sync immediately
+    if (syncImmediately) {
+      syncNow();
+    }
   };
 
   const handleDeleteTip = (tipId: number) => {

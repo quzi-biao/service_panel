@@ -34,27 +34,16 @@ export default function TipCard({ tip, onUpdate, onDelete }: TipCardProps) {
   };
 
   const handleSave = async () => {
-    try {
-      const response = await fetch(`/api/tips/${tip.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content: editContent,
-          tags: editTags.trim() || null,
-        }),
-      });
+    const updatedTip = {
+      ...tip,
+      content: editContent,
+      tags: editTags.trim() || null,
+      updated_at: new Date().toISOString(),
+    };
 
-      const data = await response.json();
-      if (data.success && data.tip) {
-        onUpdate(data.tip);
-        setIsEditing(false);
-      } else {
-        alert('更新失败: ' + data.error);
-      }
-    } catch (error) {
-      console.error('Error updating tip:', error);
-      alert('更新失败');
-    }
+    // Update immediately in local state (will be synced in background)
+    onUpdate(updatedTip, true); // true = sync immediately since user explicitly saved
+    setIsEditing(false);
   };
 
   const handleDelete = async () => {

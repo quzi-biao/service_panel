@@ -115,38 +115,26 @@ export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete
   };
 
   const handleCellUpdate = async (taskId: number, field: string) => {
-    try {
-      const updateData: any = {};
-      
-      if (field === 'task_name') {
-        updateData.task_name = editValue;
-      } else if (field === 'task_description') {
-        updateData.task_description = editValue;
-      } else if (field === 'project_name') {
-        updateData.project_id = editProjectId;
-        updateData.project_name = editValue;
-      }
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
 
-      const response = await fetch(`/api/tasks/${taskId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updateData),
-      });
-
-      const data = await response.json();
-      if (data.success && data.task) {
-        onTaskUpdate(data.task);
-      } else {
-        alert('更新任务失败: ' + data.error);
-      }
-    } catch (error) {
-      console.error('Error updating task:', error);
-      alert('更新任务失败');
-    } finally {
-      setEditingCell(null);
-      setEditValue('');
-      setEditProjectId(null);
+    const updatedTask = { ...task };
+    
+    if (field === 'task_name') {
+      updatedTask.task_name = editValue;
+    } else if (field === 'task_description') {
+      updatedTask.task_description = editValue;
+    } else if (field === 'project_name') {
+      updatedTask.project_id = editProjectId;
+      updatedTask.project_name = editValue;
     }
+
+    // Update immediately in local state (will be synced in background)
+    onTaskUpdate(updatedTask);
+    
+    setEditingCell(null);
+    setEditValue('');
+    setEditProjectId(null);
   };
 
   const getStatusLabel = (status: string) => {

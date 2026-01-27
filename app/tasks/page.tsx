@@ -8,6 +8,7 @@ import TaskFilterBar from '@/components/tasks/TaskFilterBar';
 import TaskTable from '@/components/tasks/TaskTable';
 import TaskCardView from '@/components/tasks/TaskCardView';
 import PaginationControls from '@/components/tasks/PaginationControls';
+import { useLocalCache } from '@/hooks/useLocalCache';
 import { Plus, Upload, Filter } from 'lucide-react';
 
 interface Task {
@@ -48,6 +49,28 @@ export default function TasksPage() {
   const [isAddingInline, setIsAddingInline] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  // Local cache with async sync
+  const { updateItem, updateItems, syncNow } = useLocalCache<Task>({
+    storageKey: 'tasks-cache',
+    syncInterval: 10000, // 10 seconds
+    onSync: async (dirtyTasks) => {
+      // Batch sync dirty tasks to server
+      for (const task of dirtyTasks) {
+        try {
+          await fetch(`/api/tasks/${task.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(task),
+          });
+        } catch (error) {
+          console.error(`Failed to sync task ${task.id}:`, error);
+          throw error; // Re-throw to mark as failed
+        }
+      }
+    },
+    autoSync: true,
+  });
+  
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 100;
@@ -74,6 +97,8 @@ export default function TasksPage() {
       const data = await response.json();
       if (data.success) {
         setTasks(data.tasks);
+        // Initialize cache with server data (mark as clean)
+        updateItems(data.tasks, false);
       }
     } catch (error) {
       console.error('Error fetching tasks:', error);
@@ -82,12 +107,21 @@ export default function TasksPage() {
     }
   };
 
-  const updateTask = (updatedTask: Task) => {
+  const updateTask = (updatedTask: Task, syncImmediately: boolean = false) => {
+    // Update local state immediately
     setTasks(prevTasks => 
       prevTasks.map(task => 
         task.id === updatedTask.id ? updatedTask : task
       )
     );
+    
+    // Update cache (mark as dirty for async sync)
+    updateItem(updatedTask, true);
+    
+    // If user explicitly saves, sync immediately
+    if (syncImmediately) {
+      syncNow();
+    }
   };
 
 

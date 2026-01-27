@@ -96,7 +96,7 @@ export default function ProjectSelector({
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-hidden">
+        <div className="absolute z-50 min-w-max w-64 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-hidden">
           {/* Search Input */}
           <div className="p-2 border-b border-gray-200">
             <div className="relative">
