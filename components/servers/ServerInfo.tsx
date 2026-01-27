@@ -61,8 +61,8 @@ export default function ServerInfo({ server, onUpdateServer }: ServerInfoProps) 
   };
 
   return (
-    <div className="h-full overflow-y-auto p-6">
-      <div className="max-w-3xl mx-auto">
+    <div className="h-full overflow-y-auto">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-900">服务器信息</h2>

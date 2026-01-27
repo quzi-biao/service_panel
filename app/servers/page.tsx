@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Server } from 'lucide-react';
+import { Plus, Menu } from 'lucide-react';
 import Header from '@/components/shared/Header';
-import ServerList from '@/components/servers/ServerList';
+import ServerNavigation from '@/components/servers/ServerNavigation';
 import ServerTabs from '@/components/servers/ServerTabs';
 import AddServerDialog from '@/components/servers/AddServerDialog';
 
@@ -22,33 +22,16 @@ interface Server {
 }
 
 export default function ServersPage() {
-  const [servers, setServers] = useState<Server[]>([]);
   const [selectedServer, setSelectedServer] = useState<Server | null>(null);
-  const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [searchText, setSearchText] = useState('');
-  const [filterTags, setFilterTags] = useState<string[]>([]);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  useEffect(() => {
-    fetchServers();
-  }, []);
-
-  const fetchServers = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/servers');
-      const data = await response.json();
-      if (data.success) {
-        setServers(data.servers);
-        if (data.servers.length > 0 && !selectedServer) {
-          setSelectedServer(data.servers[0]);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching servers:', error);
-    } finally {
-      setLoading(false);
-    }
+  const refreshServerList = async () => {
+    // Trigger server list refresh by re-mounting ServerNavigation
+    setSelectedServer(null);
+    setTimeout(() => {
+      // ServerNavigation will auto-select first server
+    }, 100);
   };
 
   const handleAddServer = async (serverData: any) => {
@@ -61,9 +44,9 @@ export default function ServersPage() {
 
       const data = await response.json();
       if (data.success && data.server) {
-        setServers([...servers, data.server]);
         setSelectedServer(data.server);
         setShowAddDialog(false);
+        await refreshServerList();
       } else {
         alert('添加服务器失败: ' + data.error);
       }
@@ -83,8 +66,8 @@ export default function ServersPage() {
 
       const data = await response.json();
       if (data.success && data.server) {
-        setServers(servers.map(s => s.id === data.server.id ? data.server : s));
         setSelectedServer(data.server);
+        await refreshServerList();
       } else {
         alert('更新服务器失败: ' + data.error);
       }
@@ -106,11 +89,10 @@ export default function ServersPage() {
 
       const data = await response.json();
       if (data.success) {
-        const newServers = servers.filter(s => s.id !== serverId);
-        setServers(newServers);
         if (selectedServer?.id === serverId) {
-          setSelectedServer(newServers.length > 0 ? newServers[0] : null);
+          setSelectedServer(null);
         }
+        await refreshServerList();
       } else {
         alert('删除服务器失败: ' + data.error);
       }
@@ -121,48 +103,55 @@ export default function ServersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
       <Header>
-        <button
-          onClick={() => setShowAddDialog(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          添加服务器
-        </button>
-      </Header>
-
-      {/* Main Content */}
-      <div className="flex h-[calc(100vh-64px)]">
-        {/* Left Sidebar - Server List */}
-        <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
-          <ServerList
-            servers={servers}
-            selectedServer={selectedServer}
-            onSelectServer={setSelectedServer}
-            searchText={searchText}
-            onSearchChange={setSearchText}
-            filterTags={filterTags}
-            onFilterTagsChange={setFilterTags}
-            onDeleteServer={handleDeleteServer}
-          />
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsMobileSidebarOpen(true)}
+            className="md:hidden inline-flex items-center px-3 py-1.5 text-sm bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-all shadow-md hover:shadow-lg"
+            title="服务器列表"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
+          
+          <button
+            onClick={() => setShowAddDialog(true)}
+            className="inline-flex items-center px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg"
+            title="添加服务器"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
         </div>
+      </Header>
+      
+      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+        <div className="h-[calc(100vh-64px)]">
+          <div className="flex h-full">
+            {/* 桌面端导航 */}
+            <aside className="hidden md:block w-64 flex-shrink-0">
+              <ServerNavigation
+                currentServerId={selectedServer?.id || null}
+                onServerChange={setSelectedServer}
+              />
+            </aside>
 
-        {/* Right Content - Server Tabs */}
-        <div className="flex-1 overflow-hidden">
-          {selectedServer ? (
-            <ServerTabs
-              server={selectedServer}
-              onUpdateServer={handleUpdateServer}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full text-gray-400">
-              <div className="text-center">
-                <Server className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <p className="text-lg">请选择一个服务器</p>
-              </div>
-            </div>
-          )}
+            {/* 主内容区 */}
+            <main className="flex-1 min-w-0 h-full">
+              {selectedServer ? (
+                <ServerTabs
+                  server={selectedServer}
+                  onUpdateServer={handleUpdateServer}
+                  onDeleteServer={handleDeleteServer}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full bg-white/60 backdrop-blur-sm">
+                  <div className="text-center">
+                    <p className="text-gray-600">请从左侧选择一个服务器</p>
+                  </div>
+                </div>
+              )}
+            </main>
+          </div>
         </div>
       </div>
 
@@ -173,6 +162,6 @@ export default function ServersPage() {
           onAdd={handleAddServer}
         />
       )}
-    </div>
+    </>
   );
 }

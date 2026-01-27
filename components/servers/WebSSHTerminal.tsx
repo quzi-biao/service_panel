@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import { Terminal as TerminalIcon, Power, RefreshCw } from 'lucide-react';
 import 'xterm/css/xterm.css';
 
@@ -17,7 +17,14 @@ interface WebSSHTerminalProps {
   server: Server;
 }
 
-export default function WebSSHTerminal({ server }: WebSSHTerminalProps) {
+export interface WebSSHTerminalHandle {
+  connect: () => void;
+  disconnect: () => void;
+  reconnect: () => void;
+  status: 'disconnected' | 'connecting' | 'connected';
+}
+
+const WebSSHTerminal = forwardRef<WebSSHTerminalHandle, WebSSHTerminalProps>(({ server }, ref) => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +55,7 @@ export default function WebSSHTerminal({ server }: WebSSHTerminalProps) {
             background: '#1e1e1e',
             foreground: '#d4d4d4',
             cursor: '#ffffff',
-            selection: 'rgba(255, 255, 255, 0.3)',
+            //selection: 'rgba(255, 255, 255, 0.3)',
           },
           rows: 30,
           cols: 100,
@@ -190,62 +197,16 @@ export default function WebSSHTerminal({ server }: WebSSHTerminalProps) {
     setTimeout(() => connect(), 500);
   };
 
+  // 暴露方法和状态给父组件
+  useImperativeHandle(ref, () => ({
+    connect,
+    disconnect,
+    reconnect,
+    status,
+  }));
+
   return (
     <div className="flex flex-col h-full bg-gray-900">
-      {/* Toolbar */}
-      <div className="bg-gray-800 border-b border-gray-700 px-4 py-2 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <TerminalIcon className="w-5 h-5 text-gray-400" />
-          <span className="text-sm text-gray-300">
-            {server.username}@{server.host}:{server.port}
-          </span>
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-2 h-2 rounded-full ${
-                status === 'connected'
-                  ? 'bg-green-500'
-                  : status === 'connecting'
-                  ? 'bg-yellow-500 animate-pulse'
-                  : 'bg-red-500'
-              }`}
-            />
-            <span className="text-xs text-gray-400">
-              {status === 'connected' ? '已连接' : status === 'connecting' ? '连接中...' : '未连接'}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {status === 'disconnected' && (
-            <button
-              onClick={connect}
-              className="flex items-center gap-2 px-3 py-1.5 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
-            >
-              <Power className="w-4 h-4" />
-              连接
-            </button>
-          )}
-          {status === 'connected' && (
-            <>
-              <button
-                onClick={reconnect}
-                className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
-              >
-                <RefreshCw className="w-4 h-4" />
-                重连
-              </button>
-              <button
-                onClick={disconnect}
-                className="flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
-              >
-                <Power className="w-4 h-4" />
-                断开
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-
       {/* Error Message */}
       {error && (
         <div className="bg-red-900 border-b border-red-700 px-4 py-2">
@@ -257,4 +218,7 @@ export default function WebSSHTerminal({ server }: WebSSHTerminalProps) {
       <div ref={terminalRef} className="flex-1 p-2" />
     </div>
   );
-}
+});
+
+export default WebSSHTerminal;
+export type { WebSSHTerminalProps };
