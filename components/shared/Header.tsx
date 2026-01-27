@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
-import { Server, FolderGit2, CheckSquare, Lightbulb } from 'lucide-react';
+import { Server, FolderGit2, CheckSquare, Lightbulb, HardDrive } from 'lucide-react';
 
 interface HeaderProps {
   children?: React.ReactNode;
@@ -17,6 +17,7 @@ export default function Header({ children, leftContent, rightContent }: HeaderPr
   const isProjectsActive = pathname?.startsWith('/projects');
   const isTasksActive = pathname?.startsWith('/tasks');
   const isTipsActive = pathname?.startsWith('/tips');
+  const isServersActive = pathname?.startsWith('/servers');
 
   return (
     <header className="bg-black backdrop-blur-md shadow-lg border-b border-gray-800 sticky top-0 z-50">
@@ -74,6 +75,18 @@ export default function Header({ children, leftContent, rightContent }: HeaderPr
                   >
                     <Lightbulb className="w-4 h-4" />
                     <span className="font-medium hidden md:inline">快速记录</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => router.push('/servers')}
+                    className={`flex items-center gap-2 transition-colors ${
+                      isServersActive
+                        ? 'text-white'
+                        : 'text-gray-400 hover:text-gray-200'
+                    }`}
+                  >
+                    <HardDrive className="w-4 h-4" />
+                    <span className="font-medium hidden md:inline">服务器列表</span>
                   </button>
                 </nav>
               </>

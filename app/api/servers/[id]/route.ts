@@ -1,0 +1,91 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { query } from '@/lib/db';
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const body = await request.json();
+    const { name, host, port, username, password, primary_tag, tags, description } = body;
+    const serverId = params.id;
+
+    const updates: string[] = [];
+    const values: any[] = [];
+
+    if (name !== undefined) {
+      updates.push('name = ?');
+      values.push(name);
+    }
+    if (host !== undefined) {
+      updates.push('host = ?');
+      values.push(host);
+    }
+    if (port !== undefined) {
+      updates.push('port = ?');
+      values.push(port);
+    }
+    if (username !== undefined) {
+      updates.push('username = ?');
+      values.push(username);
+    }
+    if (password !== undefined) {
+      updates.push('password = ?');
+      values.push(password);
+    }
+    if (primary_tag !== undefined) {
+      updates.push('primary_tag = ?');
+      values.push(primary_tag);
+    }
+    if (tags !== undefined) {
+      updates.push('tags = ?');
+      values.push(tags);
+    }
+    if (description !== undefined) {
+      updates.push('description = ?');
+      values.push(description);
+    }
+
+    if (updates.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'No fields to update' },
+        { status: 400 }
+      );
+    }
+
+    values.push(serverId);
+    const sql = `UPDATE servers SET ${updates.join(', ')} WHERE id = ?`;
+    
+    await query(sql, values);
+
+    const updatedServer = await query('SELECT * FROM servers WHERE id = ?', [serverId]);
+    
+    return NextResponse.json({ 
+      success: true, 
+      server: updatedServer[0] 
+    });
+  } catch (error) {
+    console.error('Error updating server:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to update server' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const serverId = params.id;
+    await query('DELETE FROM servers WHERE id = ?', [serverId]);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting server:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to delete server' },
+      { status: 500 }
+    );
+  }
+}
