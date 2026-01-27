@@ -13,7 +13,7 @@ interface Tip {
 
 interface TipCardProps {
   tip: Tip;
-  onUpdate: (updatedTip: Tip) => void;
+  onUpdate: (updatedTip: Tip, syncImmediately?: boolean) => void;
   onDelete: (tipId: number) => void;
 }
 
