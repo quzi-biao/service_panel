@@ -545,21 +545,21 @@ export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete
                       <ProjectSelector
                         value={editProjectId}
                         onChange={(id, name) => {
-                          setEditProjectId(id);
-                          setEditValue(name || '');
+                          // Auto-save immediately to server
+                          const updatedTask = { ...task };
+                          updatedTask.project_id = id;
+                          updatedTask.project_name = name || null;
+                          onTaskUpdate(updatedTask, true); // true = sync immediately to server
+                          setEditingCell(null);
+                          setEditValue('');
+                          setEditProjectId(null);
                         }}
                         placeholder="选择项目"
                       />
                     </div>
                     <button
-                      onClick={() => handleCellUpdate(task.id, 'project_name')}
-                      className="p-1 text-green-600 hover:bg-green-50 rounded flex-shrink-0"
-                    >
-                      <Check className="w-4 h-4" />
-                    </button>
-                    <button
                       onClick={() => setEditingCell(null)}
-                      className="p-1 text-red-600 hover:bg-red-50 rounded flex-shrink-0"
+                      className="p-1 text-gray-600 hover:bg-gray-50 rounded flex-shrink-0"
                     >
                       <X className="w-4 h-4" />
                     </button>

@@ -44,7 +44,15 @@ export async function PUT(
     }
     if (completed_time !== undefined) {
       updates.push('completed_time = ?');
-      values.push(completed_time);
+      // Convert ISO string to MySQL datetime format or null
+      if (completed_time === null) {
+        values.push(null);
+      } else {
+        // Convert ISO 8601 to MySQL datetime format (YYYY-MM-DD HH:MM:SS)
+        const date = new Date(completed_time);
+        const mysqlDatetime = date.toISOString().slice(0, 19).replace('T', ' ');
+        values.push(mysqlDatetime);
+      }
     }
 
     if (updates.length === 0) {
