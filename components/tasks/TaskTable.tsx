@@ -19,7 +19,7 @@ interface Task {
 
 interface TaskTableProps {
   tasks: Task[];
-  onTaskUpdate: (updatedTask: Task) => void;
+  onTaskUpdate: (updatedTask: Task, syncImmediately?: boolean) => void;
   onTaskAdd?: (taskData: any) => Promise<void>;
   onTaskDelete?: (taskId: number) => Promise<void>;
   isAddingTask?: boolean;
