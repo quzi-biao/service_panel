@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const { exec } = require('child_process');
 const path = require('path');
 const os = require('os');
@@ -212,6 +212,17 @@ ipcMain.handle('get-platform', () => {
     arch: os.arch(),
     version: os.release()
   };
+});
+
+// 使用默认浏览器打开 URL
+ipcMain.handle('open-external', async (event, url) => {
+  try {
+    await shell.openExternal(url);
+    return { success: true };
+  } catch (error) {
+    console.error('Error opening external URL:', error);
+    return { success: false, error: error.message };
+  }
 });
 
 app.whenReady().then(createWindow);

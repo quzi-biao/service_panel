@@ -91,8 +91,21 @@ export default function Home() {
     setShowServiceDetailModal(true);
   };
 
-  const openService = (url: string) => {
-    window.open(url, '_blank');
+  const openService = async (url: string) => {
+    // 检查是否在 Electron 环境中
+    if (typeof window !== 'undefined' && (window as any).electron?.isElectron) {
+      // 在 Electron 中使用默认浏览器打开
+      try {
+        await (window as any).electron.openExternal(url);
+      } catch (error) {
+        console.error('Failed to open URL in external browser:', error);
+        // 如果失败，回退到 window.open
+        window.open(url, '_blank');
+      }
+    } else {
+      // 在浏览器中正常打开
+      window.open(url, '_blank');
+    }
   };
 
   const filteredServices = services.filter((service) => {
