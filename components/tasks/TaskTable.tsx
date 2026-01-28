@@ -411,6 +411,14 @@ export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete
                       onChange={(e) => setEditValue(e.target.value)}
                       className="flex-1 px-2 py-1 border border-indigo-500 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       autoFocus
+                      onBlur={() => {
+                        // 延迟执行，让按钮点击事件先触发
+                        setTimeout(() => {
+                          if (editingCell?.taskId === task.id && editingCell?.field === 'task_name') {
+                            handleCellUpdate(task.id, 'task_name');
+                          }
+                        }, 200);
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           handleCellUpdate(task.id, 'task_name');
@@ -467,6 +475,14 @@ export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete
                       className="flex-1 px-2 py-1 border border-indigo-500 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none overflow-hidden"
                       autoFocus
                       rows={Math.max(1, (editValue || '').split('\n').length)}
+                      onBlur={() => {
+                        // 延迟执行，让按钮点击事件先触发
+                        setTimeout(() => {
+                          if (editingCell?.taskId === task.id && editingCell?.field === 'task_description') {
+                            handleCellUpdate(task.id, 'task_description');
+                          }
+                        }, 200);
+                      }}
                       onInput={(e) => {
                         const target = e.target as HTMLTextAreaElement;
                         target.style.height = 'auto';
