@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { X } from 'lucide-react';
 import WebSSHTerminal from './WebSSHTerminal';
 import SSHToolbar from './SSHToolbar';
+import SFTPFileBrowser from './SFTPFileBrowser';
 import { Server } from '@/types/server';
 
 interface ServerTabsProps {
@@ -23,6 +24,8 @@ export default function ServerTabs({ server, autoConnect = false, onUpdateServer
   const [tabs, setTabs] = useState<SSHTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string>('');
   const [autoConnectTabId, setAutoConnectTabId] = useState<string | null>(null);
+  const [showFileBrowser, setShowFileBrowser] = useState(false);
+  const [currentSocket, setCurrentSocket] = useState<any>(null);
   const prevServerIdRef = useRef<number | null>(null);
 
   // 当选择新服务器时，添加或切换到对应的 tab
@@ -85,10 +88,10 @@ export default function ServerTabs({ server, autoConnect = false, onUpdateServer
         <div className="flex items-center justify-between px-4">
           <div className="flex items-center gap-1 overflow-x-auto">
             {tabs.map((tab) => (
-              <button
+              <div
                 key={tab.id}
                 onClick={() => setActiveTabId(tab.id)}
-                className={`flex items-center gap-2 px-3 py-2 text-sm border-b-2 transition-colors whitespace-nowrap ${
+                className={`flex items-center gap-2 px-3 py-2 text-sm border-b-2 transition-colors whitespace-nowrap cursor-pointer ${
                   activeTabId === tab.id
                     ? 'border-indigo-600 text-indigo-600 bg-white'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100'
@@ -102,7 +105,7 @@ export default function ServerTabs({ server, autoConnect = false, onUpdateServer
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
-              </button>
+              </div>
             ))}
           </div>
           
@@ -111,6 +114,12 @@ export default function ServerTabs({ server, autoConnect = false, onUpdateServer
             <SSHToolbar 
               server={activeTab.server}
               terminalRef={activeTab.ref}
+              onOpenFileBrowser={() => {
+                const socket = activeTab.ref.current?.getSocket();
+                console.log('Opening file browser, socket:', socket);
+                setCurrentSocket(socket);
+                setShowFileBrowser(true);
+              }}
             />
           )}
         </div>
@@ -136,6 +145,21 @@ export default function ServerTabs({ server, autoConnect = false, onUpdateServer
         {tabs.length === 0 && (
           <div className="flex items-center justify-center h-full text-gray-500">
             <p>请从左侧选择一个服务器</p>
+          </div>
+        )}
+
+        {/* File Browser Modal - 作为弹窗覆盖在终端之上 */}
+        {showFileBrowser && (
+          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-2xl w-[90%] h-[90%] flex flex-col">
+              <SFTPFileBrowser
+                socket={currentSocket}
+                onClose={() => {
+                  setShowFileBrowser(false);
+                  setCurrentSocket(null);
+                }}
+              />
+            </div>
           </div>
         )}
       </div>

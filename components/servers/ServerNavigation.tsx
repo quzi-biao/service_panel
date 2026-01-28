@@ -231,10 +231,10 @@ const ServerNavigation = forwardRef<ServerNavigationHandle, ServerNavigationProp
                               key={server.id}
                               className="group relative"
                             >
-                              <button
+                              <div
                                 onClick={() => handleServerClick(server)}
                                 onDoubleClick={() => handleServerDoubleClick(server)}
-                                className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-colors ${
+                                className={`w-full text-left px-3 py-2 text-sm rounded-lg transition-colors cursor-pointer ${
                                   server.id === currentServerId
                                     ? 'bg-indigo-100 text-indigo-700 font-medium'
                                     : 'text-gray-600 hover:bg-gray-50'
@@ -274,7 +274,7 @@ const ServerNavigation = forwardRef<ServerNavigationHandle, ServerNavigationProp
                                     )}
                                   </div>
                                 </div>
-                              </button>
+                              </div>
                             </div>
                           ))}
                       </div>

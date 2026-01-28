@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Terminal as TerminalIcon, Power, RefreshCw } from 'lucide-react';
+import { Terminal as TerminalIcon, Power, RefreshCw, FolderOpen } from 'lucide-react';
 import type { WebSSHTerminalHandle } from './WebSSHTerminal';
 
 interface Server {
@@ -16,9 +16,10 @@ interface Server {
 interface SSHToolbarProps {
   server: Server;
   terminalRef: React.RefObject<WebSSHTerminalHandle>;
+  onOpenFileBrowser?: () => void;
 }
 
-export default function SSHToolbar({ server, terminalRef }: SSHToolbarProps) {
+export default function SSHToolbar({ server, terminalRef, onOpenFileBrowser }: SSHToolbarProps) {
   const [status, setStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
 
   // 定期更新状态
@@ -76,6 +77,14 @@ export default function SSHToolbar({ server, terminalRef }: SSHToolbarProps) {
         )}
         {status === 'connected' && (
           <>
+            <button
+              onClick={onOpenFileBrowser}
+              className="flex items-center gap-1.5 px-2.5 py-1 bg-purple-600 text-white text-xs rounded hover:bg-purple-700 transition-colors"
+              title="文件传输"
+            >
+              <FolderOpen className="w-3.5 h-3.5" />
+              文件传输
+            </button>
             <button
               onClick={handleReconnect}
               className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"

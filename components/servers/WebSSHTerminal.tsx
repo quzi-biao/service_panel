@@ -15,6 +15,7 @@ export interface WebSSHTerminalHandle {
   connect: () => void;
   disconnect: () => void;
   reconnect: () => void;
+  getSocket: () => any;
   status: 'disconnected' | 'connecting' | 'connected';
 }
 
@@ -206,6 +207,7 @@ const WebSSHTerminal = forwardRef<WebSSHTerminalHandle, WebSSHTerminalProps>(({ 
     connect,
     disconnect,
     reconnect,
+    getSocket: () => socketRef.current,
     status,
   }));
 
