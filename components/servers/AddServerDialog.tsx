@@ -15,6 +15,8 @@ export default function AddServerDialog({ onClose, onAdd }: AddServerDialogProps
     port: 22,
     username: '',
     password: '',
+    private_key: '',
+    auth_method: 'password' as 'password' | 'private_key',
     primary_tag: '',
     tags: '',
     description: '',
@@ -23,13 +25,24 @@ export default function AddServerDialog({ onClose, onAdd }: AddServerDialogProps
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.host || !formData.username || !formData.password) {
+    if (!formData.name || !formData.host || !formData.username) {
       alert('请填写所有必填字段');
+      return;
+    }
+
+    if (formData.auth_method === 'password' && !formData.password) {
+      alert('请输入密码');
+      return;
+    }
+
+    if (formData.auth_method === 'private_key' && !formData.private_key) {
+      alert('请输入私钥');
       return;
     }
 
     onAdd({
       ...formData,
+      private_key: formData.private_key || null,
       primary_tag: formData.primary_tag || null,
       tags: formData.tags || null,
       description: formData.description || null,
@@ -133,17 +146,50 @@ export default function AddServerDialog({ onClose, onAdd }: AddServerDialogProps
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    密码 *
+                    认证方式 *
                   </label>
-                  <input
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  <select
+                    value={formData.auth_method}
+                    onChange={(e) => setFormData({ ...formData, auth_method: e.target.value as 'password' | 'private_key' })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
-                    required
-                  />
+                  >
+                    <option value="password">密码</option>
+                    <option value="private_key">私钥</option>
+                  </select>
                 </div>
+
+                {formData.auth_method === 'password' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      密码 *
+                    </label>
+                    <input
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                      required={formData.auth_method === 'password'}
+                    />
+                  </div>
+                )}
               </div>
+
+              {formData.auth_method === 'private_key' && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    私钥 *
+                  </label>
+                  <textarea
+                    value={formData.private_key}
+                    onChange={(e) => setFormData({ ...formData, private_key: e.target.value })}
+                    rows={8}
+                    placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;...&#10;-----END RSA PRIVATE KEY-----"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 font-mono text-xs"
+                    required={formData.auth_method === 'private_key'}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">请粘贴完整的私钥内容，包括 BEGIN 和 END 标记</p>
+                </div>
+              )}
             </div>
 
             {/* Tags */}

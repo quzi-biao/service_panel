@@ -7,7 +7,7 @@ export async function PUT(
 ) {
   try {
     const body = await request.json();
-    const { name, host, port, username, password, primary_tag, tags, description } = body;
+    const { name, host, port, username, password, private_key, auth_method, primary_tag, tags, description } = body;
     const serverId = params.id;
 
     const updates: string[] = [];
@@ -32,6 +32,14 @@ export async function PUT(
     if (password !== undefined) {
       updates.push('password = ?');
       values.push(password);
+    }
+    if (private_key !== undefined) {
+      updates.push('private_key = ?');
+      values.push(private_key);
+    }
+    if (auth_method !== undefined) {
+      updates.push('auth_method = ?');
+      values.push(auth_method);
     }
     if (primary_tag !== undefined) {
       updates.push('primary_tag = ?');

@@ -2,19 +2,13 @@
 
 import { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import { Terminal as TerminalIcon, Power, RefreshCw } from 'lucide-react';
+import type { Server } from '@/types/server';
 import 'xterm/css/xterm.css';
-
-interface Server {
-  id: number;
-  name: string;
-  host: string;
-  port: number;
-  username: string;
-  password: string;
-}
 
 interface WebSSHTerminalProps {
   server: Server;
+  autoConnect?: boolean;
+  onConnected?: () => void;
 }
 
 export interface WebSSHTerminalHandle {
@@ -24,10 +18,11 @@ export interface WebSSHTerminalHandle {
   status: 'disconnected' | 'connecting' | 'connected';
 }
 
-const WebSSHTerminal = forwardRef<WebSSHTerminalHandle, WebSSHTerminalProps>(({ server }, ref) => {
+const WebSSHTerminal = forwardRef<WebSSHTerminalHandle, WebSSHTerminalProps>(({ server, autoConnect = false, onConnected }, ref) => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<'disconnected' | 'connecting' | 'connected'>('disconnected');
   const [error, setError] = useState<string | null>(null);
+  const [terminalReady, setTerminalReady] = useState(false);
   const xtermRef = useRef<any>(null);
   const socketRef = useRef<any>(null);
   const fitAddonRef = useRef<any>(null);
@@ -72,6 +67,11 @@ const WebSSHTerminal = forwardRef<WebSSHTerminalHandle, WebSSHTerminalProps>(({ 
 
         xtermRef.current = terminal;
         fitAddonRef.current = fitAddon;
+
+        // 标记终端已准备好
+        if (mounted) {
+          setTerminalReady(true);
+        }
 
         // 窗口大小调整
         const handleResize = () => {
@@ -138,6 +138,8 @@ const WebSSHTerminal = forwardRef<WebSSHTerminalHandle, WebSSHTerminalProps>(({ 
           port: server.port,
           username: server.username,
           password: server.password,
+          privateKey: server.private_key,
+          authMethod: server.auth_method,
         });
       });
 
@@ -204,6 +206,15 @@ const WebSSHTerminal = forwardRef<WebSSHTerminalHandle, WebSSHTerminalProps>(({ 
     reconnect,
     status,
   }));
+
+  // 自动连接逻辑
+  useEffect(() => {
+    if (autoConnect && terminalReady && status === 'disconnected') {
+      connect().then(() => {
+        onConnected?.();
+      });
+    }
+  }, [autoConnect, terminalReady]);
 
   return (
     <div className="flex flex-col h-full bg-gray-900">

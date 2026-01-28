@@ -19,7 +19,12 @@ function initWebSSH(httpServer) {
     let sshStream = null;
 
     socket.on('ssh-connect', (config) => {
-      console.log('SSH connection request:', { host: config.host, port: config.port, username: config.username });
+      console.log('SSH connection request:', { 
+        host: config.host, 
+        port: config.port, 
+        username: config.username,
+        authMethod: config.authMethod 
+      });
       
       sshClient = new Client();
       
@@ -63,14 +68,45 @@ function initWebSSH(httpServer) {
       });
       
       try {
-        sshClient.connect({
+        // 构建连接配置
+        const connectionConfig = {
           host: config.host,
           port: config.port || 22,
           username: config.username,
-          password: config.password,
           readyTimeout: 20000,
-          keepaliveInterval: 10000
-        });
+          keepaliveInterval: 10000,
+          tryKeyboard: true,
+          algorithms: {
+            serverHostKey: ['ssh-rsa', 'ssh-dss', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521'],
+          }
+        };
+
+        // 根据认证方式添加相应的认证信息
+        if (config.authMethod === 'private_key' && config.privateKey) {
+          // 确保私钥格式正确（处理可能的转义字符）
+          let privateKey = config.privateKey;
+          
+          // 如果私钥包含 \n 字符串而不是真正的换行符，进行替换
+          if (privateKey.includes('\\n')) {
+            privateKey = privateKey.replace(/\\n/g, '\n');
+          }
+          
+          connectionConfig.privateKey = Buffer.from(privateKey, 'utf8');
+          
+          // 如果提供了密码，可能是私钥的 passphrase
+          if (config.password) {
+            connectionConfig.passphrase = config.password;
+          }
+          
+          console.log('Using private key authentication');
+          console.log('Private key length:', privateKey.length);
+          console.log('Private key starts with:', privateKey.substring(0, 50));
+        } else {
+          connectionConfig.password = config.password;
+          console.log('Using password authentication');
+        }
+
+        sshClient.connect(connectionConfig);
       } catch (err) {
         console.error('SSH connect error:', err);
         socket.emit('ssh-error', { message: err.message });

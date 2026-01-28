@@ -5,6 +5,8 @@ CREATE TABLE IF NOT EXISTS servers (
   port INT NOT NULL DEFAULT 22,
   username VARCHAR(255) NOT NULL,
   password VARCHAR(255),
+  private_key TEXT,
+  auth_method ENUM('password', 'private_key') DEFAULT 'password',
   primary_tag VARCHAR(100),
   tags TEXT,
   description TEXT,

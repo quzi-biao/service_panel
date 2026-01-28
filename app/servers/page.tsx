@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Plus, Menu } from 'lucide-react';
 import Header from '@/components/shared/Header';
-import ServerNavigation from '@/components/servers/ServerNavigation';
+import ServerNavigation, { ServerNavigationHandle } from '@/components/servers/ServerNavigation';
 import ServerTabs from '@/components/servers/ServerTabs';
 import AddServerDialog from '@/components/servers/AddServerDialog';
 
@@ -25,13 +25,12 @@ export default function ServersPage() {
   const [selectedServer, setSelectedServer] = useState<Server | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [autoConnect, setAutoConnect] = useState(false);
+  const serverNavigationRef = useRef<ServerNavigationHandle>(null);
 
-  const refreshServerList = async () => {
-    // Trigger server list refresh by re-mounting ServerNavigation
-    setSelectedServer(null);
-    setTimeout(() => {
-      // ServerNavigation will auto-select first server
-    }, 100);
+  const handleServerChange = (server: Server, shouldAutoConnect: boolean = false) => {
+    setSelectedServer(server);
+    setAutoConnect(shouldAutoConnect);
   };
 
   const handleAddServer = async (serverData: any) => {
@@ -46,7 +45,8 @@ export default function ServersPage() {
       if (data.success && data.server) {
         setSelectedServer(data.server);
         setShowAddDialog(false);
-        await refreshServerList();
+        // 只刷新服务器导航列表
+        await serverNavigationRef.current?.refresh();
       } else {
         alert('添加服务器失败: ' + data.error);
       }
@@ -67,7 +67,8 @@ export default function ServersPage() {
       const data = await response.json();
       if (data.success && data.server) {
         setSelectedServer(data.server);
-        await refreshServerList();
+        // 只刷新服务器导航列表
+        await serverNavigationRef.current?.refresh();
       } else {
         alert('更新服务器失败: ' + data.error);
       }
@@ -92,7 +93,8 @@ export default function ServersPage() {
         if (selectedServer?.id === serverId) {
           setSelectedServer(null);
         }
-        await refreshServerList();
+        // 只刷新服务器导航列表
+        await serverNavigationRef.current?.refresh();
       } else {
         alert('删除服务器失败: ' + data.error);
       }
@@ -130,8 +132,9 @@ export default function ServersPage() {
             {/* 桌面端导航 */}
             <aside className="hidden md:block w-64 flex-shrink-0">
               <ServerNavigation
+                ref={serverNavigationRef}
                 currentServerId={selectedServer?.id || null}
-                onServerChange={setSelectedServer}
+                onServerChange={handleServerChange}
               />
             </aside>
 
@@ -140,6 +143,7 @@ export default function ServersPage() {
               {selectedServer ? (
                 <ServerTabs
                   server={selectedServer}
+                  autoConnect={autoConnect}
                   onUpdateServer={handleUpdateServer}
                   onDeleteServer={handleDeleteServer}
                 />
