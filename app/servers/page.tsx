@@ -128,7 +128,7 @@ export default function ServersPage() {
         </div>
       </Header>
       
-      <div className="h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 overflow-hidden">
+      <div className="h-[calc(100vh-64px)] bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 overflow-hidden">
         <div className="h-[calc(100vh-64px)]">
           <div className="flex h-full overflow-hidden">
             {/* 桌面端导航 */}
