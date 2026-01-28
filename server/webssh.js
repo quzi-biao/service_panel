@@ -9,7 +9,10 @@ function initWebSSH(httpServer) {
     cors: {
       origin: '*',
       methods: ['GET', 'POST']
-    }
+    },
+    maxHttpBufferSize: 100 * 1024 * 1024, // 100MB - 增加最大消息大小
+    pingTimeout: 60000, // 60秒 - 增加 ping 超时时间
+    pingInterval: 25000, // 25秒 - ping 间隔
   });
 
   io.on('connection', (socket) => {
@@ -132,8 +135,7 @@ function initWebSSH(httpServer) {
       }
     });
     
-    socket.on('disconnect', () => {
-      console.log('WebSSH client disconnected:', socket.id);
+    socket.on('disconnect', (reason) => {
       if (sshClient) {
         sshClient.end();
       }
@@ -141,32 +143,25 @@ function initWebSSH(httpServer) {
 
     // SFTP 文件传输功能
     socket.on('sftp-list-dir', (data) => {
-      console.log('Received sftp-list-dir request:', data);
       const { path } = data;
       
       if (!sshClient) {
-        console.error('SSH client not available for SFTP');
         socket.emit('sftp-error', { message: 'SSH 未连接' });
         return;
       }
 
-      console.log('Creating SFTP session...');
       sshClient.sftp((err, sftp) => {
         if (err) {
-          console.error('SFTP session creation error:', err);
           socket.emit('sftp-error', { message: err.message });
           return;
         }
 
-        console.log('SFTP session created, reading directory:', path || '.');
         sftp.readdir(path || '.', (err, list) => {
           if (err) {
-            console.error('SFTP readdir error:', err);
             socket.emit('sftp-error', { message: err.message });
             return;
           }
 
-          console.log('Directory read successfully, files count:', list.length);
           const files = list.map(item => ({
             name: item.filename,
             type: item.attrs.isDirectory() ? 'directory' : 'file',
@@ -175,7 +170,6 @@ function initWebSSH(httpServer) {
             permissions: item.attrs.mode,
           }));
 
-          console.log('Emitting sftp-dir-list with', files.length, 'files');
           socket.emit('sftp-dir-list', { path, files });
         });
       });
@@ -183,10 +177,8 @@ function initWebSSH(httpServer) {
 
     socket.on('sftp-upload-file', (data) => {
       const { remotePath, fileData, fileName } = data;
-      console.log('Upload request for:', fileName);
       
       if (!sshClient) {
-        console.error('SSH client not available for upload');
         socket.emit('sftp-error', { message: 'SSH 未连接' });
         return;
       }
@@ -203,13 +195,10 @@ function initWebSSH(httpServer) {
         const totalSize = buffer.length;
         let uploadedBytes = 0;
 
-        console.log(`Uploading ${fileName}, size: ${totalSize} bytes to ${fullPath}`);
-
         const writeStream = sftp.createWriteStream(fullPath);
         let uploadCompleted = false;
         
         writeStream.on('error', (err) => {
-          console.error('SFTP upload stream error:', err);
           if (!uploadCompleted) {
             uploadCompleted = true;
             socket.emit('sftp-upload-error', { message: err.message, fileName });
@@ -217,23 +206,21 @@ function initWebSSH(httpServer) {
         });
 
         writeStream.on('drain', () => {
-          // 数据已写入，更新进度
-          const progress = Math.min(Math.round((uploadedBytes / totalSize) * 50) + 50, 100);
-          console.log(`Upload progress for ${fileName}: ${progress}%`);
+          const progress = Math.min(Math.round((uploadedBytes / totalSize) * 100), 100);
           socket.emit('sftp-upload-progress', { fileName, progress });
         });
 
         writeStream.on('finish', () => {
           if (!uploadCompleted) {
             uploadCompleted = true;
-            console.log('File uploaded successfully:', fullPath);
             socket.emit('sftp-upload-progress', { fileName, progress: 100 });
-            socket.emit('sftp-upload-success', { fileName, remotePath: fullPath });
+            setTimeout(() => {
+              socket.emit('sftp-upload-success', { fileName, remotePath: fullPath });
+            }, 100);
           }
         });
 
         writeStream.on('close', () => {
-          console.log('Upload stream closed for:', fileName);
         });
 
         // 分块写入以支持大文件和进度报告
@@ -252,8 +239,8 @@ function initWebSSH(httpServer) {
           uploadedBytes = offset + chunk.length;
           offset += chunk.length;
 
-          // 计算进度 (50-100%)
-          const progress = Math.min(Math.round((uploadedBytes / totalSize) * 50) + 50, 100);
+          // 计算进度 (0-100%)
+          const progress = Math.min(Math.round((uploadedBytes / totalSize) * 100), 100);
           socket.emit('sftp-upload-progress', { fileName, progress });
 
           if (canContinue && offset < totalSize) {
@@ -272,7 +259,6 @@ function initWebSSH(httpServer) {
 
     socket.on('sftp-download-file', (data) => {
       const { remotePath } = data;
-      console.log('Download request for:', remotePath);
       
       if (!sshClient) {
         socket.emit('sftp-error', { message: 'SSH 未连接' });
@@ -286,17 +272,14 @@ function initWebSSH(httpServer) {
           return;
         }
 
-        // 先获取文件信息
         sftp.stat(remotePath, (err, stats) => {
           if (err) {
-            console.error('SFTP stat error:', err);
             socket.emit('sftp-download-error', { message: err.message });
             return;
           }
 
           const fileSize = stats.size;
           const fileName = remotePath.split('/').pop();
-          console.log(`Downloading ${fileName}, size: ${fileSize} bytes`);
 
           // 发送开始下载事件
           socket.emit('sftp-download-start', { fileName, fileSize });
@@ -334,7 +317,6 @@ function initWebSSH(httpServer) {
           });
 
           readStream.on('end', () => {
-            console.log('Download completed:', fileName);
             const fileData = Buffer.concat(chunks).toString('base64');
             socket.emit('sftp-download-success', {
               fileName,
@@ -343,7 +325,6 @@ function initWebSSH(httpServer) {
           });
 
           readStream.on('error', (err) => {
-            console.error('SFTP download stream error:', err);
             socket.emit('sftp-download-error', { message: err.message });
           });
         });
