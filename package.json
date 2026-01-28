@@ -21,6 +21,9 @@
       ".next/**/*",
       "electron/**/*",
       "public/**/*",
+      "server/**/*",
+      "server.js",
+      "node_modules/**/*",
       "package.json",
       ".env"
     ],

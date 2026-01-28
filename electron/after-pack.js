@@ -40,7 +40,7 @@ exports.default = async function afterPack(context) {
     console.log('Dependencies installed successfully with npm!');
 
     // 验证关键依赖
-    const criticalDeps = ['next', 'react', 'react-dom', 'styled-jsx'];
+    const criticalDeps = ['next', 'react', 'react-dom', 'styled-jsx', 'ssh2', 'socket.io', 'socket.io-client'];
     for (const dep of criticalDeps) {
       const depPath = path.join(appPath, 'node_modules', dep);
       if (fs.existsSync(depPath)) {
@@ -49,6 +49,12 @@ exports.default = async function afterPack(context) {
         console.warn(`✗ ${dep} NOT found!`);
       }
     }
+    
+    // 验证 server.js 和 server 目录
+    const serverJsPath = path.join(appPath, 'server.js');
+    const serverDirPath = path.join(appPath, 'server');
+    console.log(`✓ server.js exists: ${fs.existsSync(serverJsPath)}`);
+    console.log(`✓ server/ directory exists: ${fs.existsSync(serverDirPath)}`);
 
   } catch (error) {
     console.error('Failed to install dependencies:', error);

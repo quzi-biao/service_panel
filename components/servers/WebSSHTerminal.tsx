@@ -125,8 +125,10 @@ const WebSSHTerminal = forwardRef<WebSSHTerminalHandle, WebSSHTerminalProps>(({ 
       // 动态导入 socket.io-client
       const { io } = await import('socket.io-client');
 
-      const socket = io({
+      // 在 Electron 环境中，需要明确指定服务器地址
+      const socket = io('http://localhost:3004', {
         path: '/socket.io',
+        transports: ['websocket', 'polling'],
       });
 
       socketRef.current = socket;

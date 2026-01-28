@@ -76,19 +76,19 @@ function createWindow() {
       }
     }
     
-    // 查找 Next.js 启动脚本
-    const nextBinPath = path.join(appPath, 'node_modules', 'next', 'dist', 'bin', 'next');
-    console.log('Next.js bin path:', nextBinPath);
-    console.log('Next.js bin exists:', fs.existsSync(nextBinPath));
+    // 查找 server.js 启动脚本（包含 WebSSH 支持）
+    const serverJsPath = path.join(appPath, 'server.js');
+    console.log('Server.js path:', serverJsPath);
+    console.log('Server.js exists:', fs.existsSync(serverJsPath));
     
     // 检查 .next 目录
     const nextBuildPath = path.join(appPath, '.next');
     console.log('.next build path:', nextBuildPath);
     console.log('.next exists:', fs.existsSync(nextBuildPath));
     
-    if (!fs.existsSync(nextBinPath)) {
-      console.error('Next.js binary not found!');
-      mainWindow.loadURL(`data:text/html,<h1>Error</h1><p>Next.js not found at: ${nextBinPath}</p>`);
+    if (!fs.existsSync(serverJsPath)) {
+      console.error('server.js not found!');
+      mainWindow.loadURL(`data:text/html,<h1>Error</h1><p>server.js not found at: ${serverJsPath}</p>`);
       return;
     }
     
@@ -98,13 +98,10 @@ function createWindow() {
       return;
     }
     
-    console.log('Starting Next.js server...');
+    console.log('Starting server with WebSSH support...');
     
     nextServerProcess = spawn(nodePath, [
-      nextBinPath,
-      'start',
-      '-p',
-      '3004'
+      serverJsPath
     ], {
       cwd: appPath,
       env: { 
