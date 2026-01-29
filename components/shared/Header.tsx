@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
-import { Server, FolderGit2, CheckSquare, Lightbulb, HardDrive } from 'lucide-react';
+import { Server, FolderGit2, CheckSquare, Lightbulb, HardDrive, Bot } from 'lucide-react';
 
 interface HeaderProps {
   children?: React.ReactNode;
@@ -18,6 +18,7 @@ export default function Header({ children, leftContent, rightContent }: HeaderPr
   const isTasksActive = pathname?.startsWith('/tasks');
   const isTipsActive = pathname?.startsWith('/tips');
   const isServersActive = pathname?.startsWith('/servers');
+  const isAgentsActive = pathname?.startsWith('/agents');
 
   return (
     <header className="bg-black backdrop-blur-md shadow-lg border-b border-gray-800 sticky top-0 z-50">
@@ -87,6 +88,18 @@ export default function Header({ children, leftContent, rightContent }: HeaderPr
                   >
                     <HardDrive className="w-4 h-4" />
                     <span className="font-medium hidden md:inline">服务器列表</span>
+                  </button>
+                  
+                  <button
+                    onClick={() => router.push('/agents')}
+                    className={`flex items-center gap-2 transition-colors ${
+                      isAgentsActive
+                        ? 'text-white'
+                        : 'text-gray-400 hover:text-gray-200'
+                    }`}
+                  >
+                    <Bot className="w-4 h-4" />
+                    <span className="font-medium hidden md:inline">AI Agent</span>
                   </button>
                 </nav>
               </>
