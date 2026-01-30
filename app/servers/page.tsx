@@ -140,6 +140,29 @@ export default function ServersPage() {
               />
             </aside>
 
+            {/* 移动端侧边栏 */}
+            {isMobileSidebarOpen && (
+              <>
+                {/* 遮罩层 */}
+                <div
+                  className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+                  onClick={() => setIsMobileSidebarOpen(false)}
+                />
+                
+                {/* 侧边栏 */}
+                <aside className="fixed left-0 top-16 bottom-0 w-64 z-50 md:hidden">
+                  <ServerNavigation
+                    ref={serverNavigationRef}
+                    currentServerId={selectedServer?.id || null}
+                    onServerChange={(server, shouldAutoConnect) => {
+                      handleServerChange(server, shouldAutoConnect);
+                      setIsMobileSidebarOpen(false);
+                    }}
+                  />
+                </aside>
+              </>
+            )}
+
             {/* 主内容区 */}
             <main className="flex-1 min-w-0 h-full">
               {selectedServer ? (
