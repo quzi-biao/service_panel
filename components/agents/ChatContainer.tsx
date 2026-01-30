@@ -24,15 +24,48 @@ interface ChatContainerProps {
   onEditAgent: () => void;
 }
 
+// 本地缓存键名
+const CACHE_KEY_PREFIX = 'agent_messages_';
+
+// 从本地缓存获取消息
+const getCachedMessages = (conversationId: number): Message[] | null => {
+  try {
+    const cached = localStorage.getItem(`${CACHE_KEY_PREFIX}${conversationId}`);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch (error) {
+    console.error('Error reading cache:', error);
+  }
+  return null;
+};
+
+// 保存消息到本地缓存
+const setCachedMessages = (conversationId: number, messages: Message[]) => {
+  try {
+    localStorage.setItem(`${CACHE_KEY_PREFIX}${conversationId}`, JSON.stringify(messages));
+  } catch (error) {
+    console.error('Error writing cache:', error);
+  }
+};
+
 export default function ChatContainer({ agent, conversationId, onEditAgent }: ChatContainerProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    // 立即清空消息列表
+    setMessages([]);
+    
     if (conversationId) {
+      // 同步从缓存加载（立即显示）
+      const cached = getCachedMessages(conversationId);
+      if (cached && cached.length > 0) {
+        setMessages(cached);
+      }
+      
+      // 异步从接口获取最新数据（后台更新）
       fetchMessages();
-    } else {
-      setMessages([]);
     }
   }, [conversationId]);
 
@@ -44,6 +77,8 @@ export default function ChatContainer({ agent, conversationId, onEditAgent }: Ch
       const data = await response.json();
       if (data.success) {
         setMessages(data.messages);
+        // 更新本地缓存
+        setCachedMessages(conversationId, data.messages);
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -76,7 +111,12 @@ export default function ChatContainer({ agent, conversationId, onEditAgent }: Ch
 
       const data = await response.json();
       if (data.success && data.message) {
-        setMessages((prev) => [...prev, data.message]);
+        const newMessages = [...messages, userMessage, data.message];
+        setMessages(newMessages);
+        // 更新本地缓存
+        if (conversationId) {
+          setCachedMessages(conversationId, newMessages);
+        }
       } else {
         alert('发送失败: ' + data.error);
       }

@@ -73,7 +73,7 @@ export default function TasksPage() {
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 100;
+  const itemsPerPage = 10;
   
   // Filter states
   const [searchText, setSearchText] = useState('');

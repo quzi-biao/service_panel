@@ -81,6 +81,8 @@ export default function AgentsPage() {
 
   const handleAgentSelect = async (agentId: number) => {
     setActiveAgentId(agentId);
+    // 立即清空 conversationId，触发消息列表清空
+    setConversationId(null);
     
     // 获取或创建该 Agent 的默认对话
     try {
