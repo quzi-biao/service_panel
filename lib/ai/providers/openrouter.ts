@@ -2,6 +2,7 @@
 
 import { AIProvider, ChatCompletionRequest, ChatCompletionResponse } from '../types';
 
+// 配置说明：如果 API Key 失效，请访问 https://openrouter.ai/ 获取新的 API Key
 const OPENROUTER_CONFIG = {
   apiKey: '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',
   apiBase: 'https://openrouter.ai/api/v1/chat/completions',

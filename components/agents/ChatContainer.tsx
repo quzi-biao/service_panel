@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
-import { Trash2, RotateCcw } from 'lucide-react';
+import { Settings } from 'lucide-react';
 
 interface Message {
   id: number;
@@ -21,10 +21,10 @@ interface Agent {
 interface ChatContainerProps {
   agent: Agent | null;
   conversationId: number | null;
-  onNewConversation: () => void;
+  onEditAgent: () => void;
 }
 
-export default function ChatContainer({ agent, conversationId, onNewConversation }: ChatContainerProps) {
+export default function ChatContainer({ agent, conversationId, onEditAgent }: ChatContainerProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -107,11 +107,11 @@ export default function ChatContainer({ agent, conversationId, onNewConversation
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={onNewConversation}
+            onClick={onEditAgent}
             className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-            title="新对话"
+            title="编辑 Agent"
           >
-            <RotateCcw className="w-4 h-4" />
+            <Settings className="w-4 h-4" />
           </button>
         </div>
       </div>

@@ -1,21 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 
-interface CreateAgentDialogProps {
+interface Agent {
+  id: number;
+  name: string;
+  description: string | null;
+  system_prompt: string;
+  model: string;
+  temperature: number;
+  max_tokens: number;
+  context_window: number;
+  memory_enabled: number;
+}
+
+interface EditAgentDialogProps {
   isOpen: boolean;
+  agent: Agent;
   onClose: () => void;
-  onSubmit: (agentData: {
-    name: string;
-    description: string;
-    system_prompt: string;
-    model: string;
-    temperature: number;
-    max_tokens: number;
-    context_window: number;
-    memory_enabled: boolean;
-  }) => void;
+  onSubmit: (agentData: Partial<Agent>) => void;
 }
 
 const AVAILABLE_MODELS = [
@@ -27,7 +31,7 @@ const AVAILABLE_MODELS = [
   { id: 'meta-llama/llama-3-70b-instruct', name: 'Llama 3 70B' },
 ];
 
-export default function CreateAgentDialog({ isOpen, onClose, onSubmit }: CreateAgentDialogProps) {
+export default function EditAgentDialog({ isOpen, agent, onClose, onSubmit }: EditAgentDialogProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [systemPrompt, setSystemPrompt] = useState('');
@@ -38,6 +42,19 @@ export default function CreateAgentDialog({ isOpen, onClose, onSubmit }: CreateA
   const [memoryEnabled, setMemoryEnabled] = useState(true);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [modelSearchQuery, setModelSearchQuery] = useState('');
+
+  useEffect(() => {
+    if (agent) {
+      setName(agent.name);
+      setDescription(agent.description || '');
+      setSystemPrompt(agent.system_prompt);
+      setModel(agent.model);
+      setTemperature(agent.temperature);
+      setMaxTokens(agent.max_tokens);
+      setContextWindow(agent.context_window);
+      setMemoryEnabled(Boolean(agent.memory_enabled));
+    }
+  }, [agent]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,18 +72,9 @@ export default function CreateAgentDialog({ isOpen, onClose, onSubmit }: CreateA
       temperature,
       max_tokens: maxTokens,
       context_window: contextWindow,
-      memory_enabled: memoryEnabled,
+      memory_enabled: memoryEnabled ? 1 : 0,
     });
 
-    // 重置表单
-    setName('');
-    setDescription('');
-    setSystemPrompt('');
-    setModel('openai/gpt-3.5-turbo');
-    setTemperature(0.7);
-    setMaxTokens(2000);
-    setContextWindow(4000);
-    setMemoryEnabled(true);
     onClose();
   };
 
@@ -77,8 +85,8 @@ export default function CreateAgentDialog({ isOpen, onClose, onSubmit }: CreateA
       <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={onClose} />
       
       <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-2xl z-50 w-full max-w-2xl max-h-[90vh] overflow-auto">
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">创建 AI Agent</h2>
+        <div className="flex items-center justify-between p-2 border-b">
+          <h4 className="font-semibold text-gray-900">编辑 AI Agent</h4>
           <button
             onClick={onClose}
             className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -271,7 +279,7 @@ export default function CreateAgentDialog({ isOpen, onClose, onSubmit }: CreateA
               type="submit"
               className="px-4 py-2 text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
             >
-              创建 Agent
+              保存修改
             </button>
           </div>
         </form>
