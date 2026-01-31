@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, X } from 'lucide-react';
+import { Check, X, Maximize2, Edit3, Copy } from 'lucide-react';
 import ProjectSelector from '@/components/shared/ProjectSelector';
+import TaskRecordDrawer from './TaskRecordDrawer';
 
 interface Task {
   id: number;
@@ -39,6 +40,13 @@ export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete
   const [editingCell, setEditingCell] = useState<{ taskId: number; field: string } | null>(null);
   const [editValue, setEditValue] = useState('');
   const [editProjectId, setEditProjectId] = useState<number | null>(null);
+  
+  // Drawer states
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerContent, setDrawerContent] = useState('');
+  const [drawerMode, setDrawerMode] = useState<'view' | 'edit'>('view');
+  const [drawerTaskId, setDrawerTaskId] = useState<number | null>(null);
+  const [copiedTaskId, setCopiedTaskId] = useState<number | null>(null);
   
   // New task row states
   const [isCreatingTask, setIsCreatingTask] = useState(false);
@@ -175,6 +183,38 @@ export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete
       month: '2-digit',
       day: '2-digit',
     });
+  };
+
+  const getLineCount = (text: string | null) => {
+    if (!text) return 0;
+    return text.split('\n').length;
+  };
+
+  const handleOpenDrawer = (taskId: number, content: string, mode: 'view' | 'edit') => {
+    setDrawerTaskId(taskId);
+    setDrawerContent(content || '');
+    setDrawerMode(mode);
+    setDrawerOpen(true);
+  };
+
+  const handleSaveFromDrawer = (content: string) => {
+    if (drawerTaskId) {
+      const task = tasks.find(t => t.id === drawerTaskId);
+      if (task) {
+        const updatedTask = { ...task, task_description: content };
+        onTaskUpdate(updatedTask);
+      }
+    }
+  };
+
+  const handleCopyTaskRecord = async (taskId: number, content: string) => {
+    try {
+      await navigator.clipboard.writeText(content || '');
+      setCopiedTaskId(taskId);
+      setTimeout(() => setCopiedTaskId(null), 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
   };
 
   return (
@@ -456,10 +496,8 @@ export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete
 
               {/* Task Description */}
               <td
-                className="px-4 py-1 text-sm text-gray-600 cursor-pointer"
+                className="px-4 py-1 text-sm text-gray-600"
                 style={{...COLUMN_WIDTHS.taskDescription, wordBreak: 'break-word', overflowWrap: 'break-word'}}
-                onDoubleClick={() => handleCellDoubleClick(task, 'task_description')}
-                title={task.task_description || ''}
               >
                 {editingCell?.taskId === task.id && editingCell?.field === 'task_description' ? (
                   <div className="flex items-start gap-2">
@@ -474,9 +512,8 @@ export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete
                       onChange={(e) => setEditValue(e.target.value)}
                       className="flex-1 px-2 py-1 border border-indigo-500 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none overflow-hidden"
                       autoFocus
-                      rows={Math.max(1, (editValue || '').split('\n').length)}
+                      rows={Math.max(1, Math.min(10, (editValue || '').split('\n').length))}
                       onBlur={() => {
-                        // 延迟执行，让按钮点击事件先触发
                         setTimeout(() => {
                           if (editingCell?.taskId === task.id && editingCell?.field === 'task_description') {
                             handleCellUpdate(task.id, 'task_description');
@@ -511,7 +548,63 @@ export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete
                     </button>
                   </div>
                 ) : (
-                  <span className="whitespace-pre-wrap break-words">{task.task_description || '-'}</span>
+                  <div className="group relative">
+                    <div 
+                      className="whitespace-pre-wrap break-words cursor-pointer hover:bg-gray-50 rounded px-2 py-1"
+                      style={{
+                        maxHeight: getLineCount(task.task_description) > 10 ? '15em' : 'none',
+                        overflow: getLineCount(task.task_description) > 10 ? 'hidden' : 'visible',
+                        position: 'relative'
+                      }}
+                      onDoubleClick={() => handleCellDoubleClick(task, 'task_description')}
+                    >
+                      {task.task_description || '-'}
+                      {getLineCount(task.task_description) > 10 && (
+                        <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white to-transparent" />
+                      )}
+                    </div>
+                    {task.task_description && (
+                      <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                        <button
+                          onClick={() => handleCopyTaskRecord(task.id, task.task_description || '')}
+                          className="p-1 bg-white border border-gray-300 rounded hover:bg-gray-100 shadow-sm"
+                          title="复制内容"
+                        >
+                          {copiedTaskId === task.id ? (
+                            <Check className="w-3 h-3 text-green-600" />
+                          ) : (
+                            <Copy className="w-3 h-3 text-gray-600" />
+                          )}
+                        </button>
+                        {getLineCount(task.task_description) > 10 ? (
+                          <>
+                            <button
+                              onClick={() => handleOpenDrawer(task.id, task.task_description || '', 'view')}
+                              className="p-1 bg-white border border-gray-300 rounded hover:bg-gray-100 shadow-sm"
+                              title="查看完整内容"
+                            >
+                              <Maximize2 className="w-3 h-3 text-gray-600" />
+                            </button>
+                            <button
+                              onClick={() => handleOpenDrawer(task.id, task.task_description || '', 'edit')}
+                              className="p-1 bg-white border border-gray-300 rounded hover:bg-gray-100 shadow-sm"
+                              title="编辑内容"
+                            >
+                              <Edit3 className="w-3 h-3 text-gray-600" />
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => handleOpenDrawer(task.id, task.task_description || '', 'edit')}
+                            className="p-1 bg-white border border-gray-300 rounded hover:bg-gray-100 shadow-sm"
+                            title="编辑内容"
+                          >
+                            <Edit3 className="w-3 h-3 text-gray-600" />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 )}
               </td>
 
@@ -605,6 +698,15 @@ export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete
           )}
         </tbody>
       </table>
+
+      {/* Task Record Drawer */}
+      <TaskRecordDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        content={drawerContent}
+        mode={drawerMode}
+        onSave={handleSaveFromDrawer}
+      />
     </div>
   );
 }
