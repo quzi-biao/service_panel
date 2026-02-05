@@ -5,27 +5,14 @@ import { Plus, Menu } from 'lucide-react';
 import Header from '@/components/shared/Header';
 import ServerNavigation, { ServerNavigationHandle } from '@/components/servers/ServerNavigation';
 import ServerTabs from '@/components/servers/ServerTabs';
-import AddServerDialog from '@/components/servers/AddServerDialog';
+import ServerFormDialog from '@/components/servers/ServerFormDialog';
 
-interface Server {
-  id: number;
-  name: string;
-  host: string;
-  port: number;
-  username: string;
-  password: string;
-  private_key: string | null;
-  auth_method: 'password' | 'private_key';
-  primary_tag: string | null;
-  tags: string | null;
-  description: string | null;
-  created_at: string;
-  updated_at: string;
-}
+import type { Server } from '@/types/server';
 
 export default function ServersPage() {
   const [selectedServer, setSelectedServer] = useState<Server | null>(null);
-  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showServerForm, setShowServerForm] = useState(false);
+  const [editingServer, setEditingServer] = useState<Server | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [autoConnect, setAutoConnect] = useState(false);
   const serverNavigationRef = useRef<ServerNavigationHandle>(null);
@@ -35,10 +22,15 @@ export default function ServersPage() {
     setAutoConnect(shouldAutoConnect);
   };
 
-  const handleAddServer = async (serverData: any) => {
+  const handleServerFormSubmit = async (serverData: any) => {
+    const isEdit = !!serverData.id;
+    
     try {
-      const response = await fetch('/api/servers', {
-        method: 'POST',
+      const url = isEdit ? `/api/servers/${serverData.id}` : '/api/servers';
+      const method = isEdit ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(serverData),
       });
@@ -46,15 +38,15 @@ export default function ServersPage() {
       const data = await response.json();
       if (data.success && data.server) {
         setSelectedServer(data.server);
-        setShowAddDialog(false);
-        // 只刷新服务器导航列表
+        setShowServerForm(false);
+        setEditingServer(null);
         await serverNavigationRef.current?.refresh();
       } else {
-        alert('添加服务器失败: ' + data.error);
+        alert(`${isEdit ? '更新' : '添加'}服务器失败: ` + data.error);
       }
     } catch (error) {
-      console.error('Error adding server:', error);
-      alert('添加服务器失败');
+      console.error(`Error ${isEdit ? 'updating' : 'adding'} server:`, error);
+      alert(`${isEdit ? '更新' : '添加'}服务器失败`);
     }
   };
 
@@ -119,7 +111,10 @@ export default function ServersPage() {
           </button>
           
           <button
-            onClick={() => setShowAddDialog(true)}
+            onClick={() => {
+              setEditingServer(null);
+              setShowServerForm(true);
+            }}
             className="inline-flex items-center px-3 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg"
             title="添加服务器"
           >
@@ -184,11 +179,15 @@ export default function ServersPage() {
         </div>
       </div>
 
-      {/* Add Server Dialog */}
-      {showAddDialog && (
-        <AddServerDialog
-          onClose={() => setShowAddDialog(false)}
-          onAdd={handleAddServer}
+      {/* Server Form Dialog */}
+      {showServerForm && (
+        <ServerFormDialog
+          server={editingServer}
+          onClose={() => {
+            setShowServerForm(false);
+            setEditingServer(null);
+          }}
+          onSubmit={handleServerFormSubmit}
         />
       )}
     </>

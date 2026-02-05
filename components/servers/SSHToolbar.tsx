@@ -3,15 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Terminal as TerminalIcon, Power, RefreshCw, FolderOpen } from 'lucide-react';
 import type { WebSSHTerminalHandle } from './WebSSHTerminal';
-
-interface Server {
-  id: number;
-  name: string;
-  host: string;
-  port: number;
-  username: string;
-  password: string;
-}
+import type { Server } from '@/types/server';
 
 interface SSHToolbarProps {
   server: Server;

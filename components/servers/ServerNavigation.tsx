@@ -2,23 +2,8 @@
 
 import { useState, useEffect, forwardRef, useImperativeHandle, useRef } from 'react';
 import { ChevronDown, ChevronRight, HardDrive, Search, X, MoreVertical, Info } from 'lucide-react';
-import ServerInfoModal from './ServerInfoModal';
-
-interface Server {
-  id: number;
-  name: string;
-  host: string;
-  port: number;
-  username: string;
-  password: string;
-  private_key: string | null;
-  auth_method: 'password' | 'private_key';
-  primary_tag: string | null;
-  tags: string | null;
-  description: string | null;
-  created_at: string;
-  updated_at: string;
-}
+import ServerFormDialog from './ServerFormDialog';
+import type { Server } from '@/types/server';
 
 interface ServerNavigationProps {
   currentServerId: number | null;
@@ -39,7 +24,8 @@ const ServerNavigation = forwardRef<ServerNavigationHandle, ServerNavigationProp
     const [loading, setLoading] = useState(true);
     const [expandedTags, setExpandedTags] = useState<Set<string>>(new Set());
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedServerForInfo, setSelectedServerForInfo] = useState<Server | null>(null);
+    const [editingServer, setEditingServer] = useState<Server | null>(null);
+    const [showEditDialog, setShowEditDialog] = useState(false);
     const [openMenuId, setOpenMenuId] = useState<number | null>(null);
 
     useEffect(() => {
@@ -73,7 +59,7 @@ const ServerNavigation = forwardRef<ServerNavigationHandle, ServerNavigationProp
       refresh: fetchServers,
     }));
 
-    const handleUpdateServer = async (updatedServer: Server) => {
+    const handleUpdateServer = async (updatedServer: any) => {
       try {
         const response = await fetch(`/api/servers/${updatedServer.id}`, {
           method: 'PUT',
@@ -84,7 +70,8 @@ const ServerNavigation = forwardRef<ServerNavigationHandle, ServerNavigationProp
         const data = await response.json();
         if (data.success) {
           await fetchServers();
-          setSelectedServerForInfo(null);
+          setShowEditDialog(false);
+          setEditingServer(null);
         } else {
           alert('更新服务器失败: ' + data.error);
         }
@@ -96,7 +83,8 @@ const ServerNavigation = forwardRef<ServerNavigationHandle, ServerNavigationProp
 
     const handleShowInfo = (server: Server, e: React.MouseEvent) => {
       e.stopPropagation();
-      setSelectedServerForInfo(server);
+      setEditingServer(server);
+      setShowEditDialog(true);
       setOpenMenuId(null);
     };
 
@@ -292,12 +280,15 @@ const ServerNavigation = forwardRef<ServerNavigationHandle, ServerNavigationProp
           )}
         </div>
 
-        {/* Server Info Modal */}
-        {selectedServerForInfo && (
-          <ServerInfoModal
-            server={selectedServerForInfo}
-            onClose={() => setSelectedServerForInfo(null)}
-            onUpdate={handleUpdateServer}
+        {/* Server Edit Dialog */}
+        {showEditDialog && editingServer && (
+          <ServerFormDialog
+            server={editingServer}
+            onClose={() => {
+              setShowEditDialog(false);
+              setEditingServer(null);
+            }}
+            onSubmit={handleUpdateServer}
           />
         )}
       </div>

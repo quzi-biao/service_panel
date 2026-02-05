@@ -2,20 +2,7 @@
 
 import { useState } from 'react';
 import { Edit2, Save, X } from 'lucide-react';
-
-interface Server {
-  id: number;
-  name: string;
-  host: string;
-  port: number;
-  username: string;
-  password: string;
-  primary_tag: string | null;
-  tags: string | null;
-  description: string | null;
-  created_at: string;
-  updated_at: string;
-}
+import type { Server } from '@/types/server';
 
 interface ServerInfoProps {
   server: Server;

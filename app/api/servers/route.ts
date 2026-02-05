@@ -17,11 +17,26 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, host, port, username, password, private_key, auth_method, primary_tag, tags, description } = body;
+    const { 
+      name, host, port, username, password, private_key, auth_method, 
+      primary_tag, tags, description, network_group,
+      bastion_host, bastion_port, bastion_username, bastion_password, 
+      bastion_private_key, bastion_auth_method 
+    } = body;
 
     const result = await query(
-      'INSERT INTO servers (name, host, port, username, password, private_key, auth_method, primary_tag, tags, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [name, host, port || 22, username, password, private_key, auth_method || 'password', primary_tag, tags, description]
+      `INSERT INTO servers (
+        name, host, port, username, password, private_key, auth_method, 
+        primary_tag, tags, description, network_group,
+        bastion_host, bastion_port, bastion_username, bastion_password, 
+        bastion_private_key, bastion_auth_method
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        name, host, port || 22, username, password, private_key, auth_method || 'password', 
+        primary_tag, tags, description, network_group,
+        bastion_host, bastion_port || 22, bastion_username, bastion_password, 
+        bastion_private_key, bastion_auth_method || 'password'
+      ]
     );
 
     const newServer = await query('SELECT * FROM servers WHERE id = ?', [result.insertId]);

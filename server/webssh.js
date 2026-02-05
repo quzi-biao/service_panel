@@ -3,6 +3,162 @@ const { Client } = require('ssh2');
 
 let io;
 
+// 通过跳板机连接目标服务器
+function connectViaBastion(socket, config) {
+  const bastionClient = new Client();
+  let targetClient = null;
+  let targetStream = null;
+
+  bastionClient.on('ready', () => {
+    console.log('Bastion connection ready');
+    
+    // 构建目标服务器认证配置
+    const targetConfig = {
+      host: config.host,
+      port: config.port || 22,
+      username: config.username,
+      readyTimeout: 30000,
+    };
+
+    if (config.authMethod === 'private_key' && config.privateKey) {
+      let privateKey = config.privateKey;
+      if (privateKey.includes('\\n')) {
+        privateKey = privateKey.replace(/\\n/g, '\n');
+      }
+      targetConfig.privateKey = Buffer.from(privateKey, 'utf8');
+      if (config.password) {
+        targetConfig.passphrase = config.password;
+      }
+    } else {
+      targetConfig.password = config.password;
+    }
+
+    // 通过跳板机连接目标服务器
+    bastionClient.forwardOut('127.0.0.1', 0, config.host, config.port || 22, (err, stream) => {
+      if (err) {
+        console.error('Bastion forward error:', err);
+        socket.emit('ssh-error', { message: '跳板机转发失败: ' + err.message });
+        bastionClient.end();
+        return;
+      }
+
+      targetClient = new Client();
+      
+      targetClient.on('ready', () => {
+        console.log('Target server connection ready via bastion');
+        socket.emit('ssh-status', { status: 'connected' });
+        
+        targetClient.shell({ term: 'xterm-256color' }, (err, shell) => {
+          if (err) {
+            console.error('Target shell error:', err);
+            socket.emit('ssh-error', { message: err.message });
+            return;
+          }
+          
+          targetStream = shell;
+          
+          shell.on('data', (data) => {
+            socket.emit('ssh-output', data.toString('utf-8'));
+          });
+          
+          shell.on('close', () => {
+            console.log('Target SSH stream closed');
+            socket.emit('ssh-status', { status: 'disconnected' });
+            targetClient.end();
+            bastionClient.end();
+          });
+          
+          shell.stderr.on('data', (data) => {
+            socket.emit('ssh-output', data.toString('utf-8'));
+          });
+        });
+      });
+
+      targetClient.on('error', (err) => {
+        console.error('Target SSH error:', err);
+        socket.emit('ssh-error', { message: '目标服务器连接失败: ' + err.message });
+        bastionClient.end();
+      });
+
+      targetClient.on('close', () => {
+        console.log('Target SSH connection closed');
+        socket.emit('ssh-status', { status: 'disconnected' });
+      });
+
+      targetConfig.sock = stream;
+      targetClient.connect(targetConfig);
+    });
+  });
+
+  bastionClient.on('error', (err) => {
+    console.error('Bastion connection error:', err);
+    socket.emit('ssh-error', { message: '跳板机连接失败: ' + err.message });
+  });
+
+  bastionClient.on('close', () => {
+    console.log('Bastion connection closed');
+    socket.emit('ssh-status', { status: 'disconnected' });
+  });
+
+  // 构建跳板机认证配置
+  const bastionConfig = {
+    host: config.bastionHost,
+    port: config.bastionPort || 22,
+    username: config.bastionUsername,
+    readyTimeout: 30000,
+    keepaliveInterval: 5000,
+    keepaliveCountMax: 10,
+  };
+
+  if (config.bastionAuthMethod === 'private_key' && config.bastionPrivateKey) {
+    let privateKey = config.bastionPrivateKey;
+    if (privateKey.includes('\\n')) {
+      privateKey = privateKey.replace(/\\n/g, '\n');
+    }
+    bastionConfig.privateKey = Buffer.from(privateKey, 'utf8');
+    if (config.bastionPassword) {
+      bastionConfig.passphrase = config.bastionPassword;
+    }
+  } else {
+    bastionConfig.password = config.bastionPassword;
+  }
+
+  bastionClient.connect(bastionConfig);
+
+  // 处理终端输入
+  socket.on('ssh-input', (data) => {
+    if (targetStream && targetStream.writable) {
+      targetStream.write(data);
+    }
+  });
+
+  // 处理终端大小调整
+  socket.on('ssh-resize', ({ rows, cols }) => {
+    if (targetStream) {
+      targetStream.setWindow(rows, cols);
+    }
+  });
+
+  // 处理断开连接
+  socket.on('ssh-disconnect', () => {
+    if (targetClient) {
+      targetClient.end();
+    }
+    if (bastionClient) {
+      bastionClient.end();
+    }
+  });
+
+  socket.on('disconnect', () => {
+    if (targetClient) {
+      targetClient.end();
+    }
+    if (bastionClient) {
+      bastionClient.end();
+    }
+  });
+}
+
 function initWebSSH(httpServer) {
   io = new Server(httpServer, {
     path: '/socket.io',
@@ -26,8 +182,15 @@ function initWebSSH(httpServer) {
         host: config.host, 
         port: config.port, 
         username: config.username,
-        authMethod: config.authMethod 
+        authMethod: config.authMethod,
+        hasBastion: !!config.bastionHost
       });
+      
+      // 如果配置了跳板机，使用跳板机连接
+      if (config.bastionHost) {
+        connectViaBastion(socket, config);
+        return;
+      }
       
       sshClient = new Client();
       

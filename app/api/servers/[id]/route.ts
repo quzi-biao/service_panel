@@ -7,7 +7,12 @@ export async function PUT(
 ) {
   try {
     const body = await request.json();
-    const { name, host, port, username, password, private_key, auth_method, primary_tag, tags, description } = body;
+    const { 
+      name, host, port, username, password, private_key, auth_method, 
+      primary_tag, tags, description, network_group,
+      bastion_host, bastion_port, bastion_username, bastion_password, 
+      bastion_private_key, bastion_auth_method 
+    } = body;
     const serverId = params.id;
 
     const updates: string[] = [];
@@ -52,6 +57,34 @@ export async function PUT(
     if (description !== undefined) {
       updates.push('description = ?');
       values.push(description);
+    }
+    if (network_group !== undefined) {
+      updates.push('network_group = ?');
+      values.push(network_group);
+    }
+    if (bastion_host !== undefined) {
+      updates.push('bastion_host = ?');
+      values.push(bastion_host);
+    }
+    if (bastion_port !== undefined) {
+      updates.push('bastion_port = ?');
+      values.push(bastion_port);
+    }
+    if (bastion_username !== undefined) {
+      updates.push('bastion_username = ?');
+      values.push(bastion_username);
+    }
+    if (bastion_password !== undefined) {
+      updates.push('bastion_password = ?');
+      values.push(bastion_password);
+    }
+    if (bastion_private_key !== undefined) {
+      updates.push('bastion_private_key = ?');
+      values.push(bastion_private_key);
+    }
+    if (bastion_auth_method !== undefined) {
+      updates.push('bastion_auth_method = ?');
+      values.push(bastion_auth_method);
     }
 
     if (updates.length === 0) {

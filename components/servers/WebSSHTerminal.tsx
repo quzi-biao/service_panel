@@ -149,6 +149,13 @@ const WebSSHTerminal = forwardRef<WebSSHTerminalHandle, WebSSHTerminalProps>(({ 
           password: server.password,
           privateKey: server.private_key,
           authMethod: server.auth_method,
+          // 跳板机配置
+          bastionHost: server.bastion_host,
+          bastionPort: server.bastion_port,
+          bastionUsername: server.bastion_username,
+          bastionPassword: server.bastion_password,
+          bastionPrivateKey: server.bastion_private_key,
+          bastionAuthMethod: server.bastion_auth_method,
         });
       });
 
