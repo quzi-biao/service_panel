@@ -6,12 +6,20 @@
   "scripts": {
     "dev": "node server.js",
     "build": "next build",
+    "build:mobile": "BUILD_MODE=mobile next build",
     "start": "NODE_ENV=production node server.js",
     "lint": "next lint",
     "electron": "electron .",
     "electron:dev": "concurrently \"node server.js\" \"wait-on http://localhost:3004 && electron .\"",
     "electron:build": "CSC_IDENTITY_AUTO_DISCOVERY=false next build && electron-builder",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "cap:init": "cap init",
+    "cap:add:ios": "cap add ios",
+    "cap:add:android": "cap add android",
+    "cap:sync": "npm run build:mobile && cap sync",
+    "cap:open:ios": "cap open ios",
+    "cap:open:android": "cap open android",
+    "mobile:build": "npm run build:mobile && cap sync"
   },
   "build": {
     "appId": "com.devpanel.app",
