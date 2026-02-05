@@ -4,8 +4,8 @@ const next = require('next');
 const { initWebSSH } = require('./server/webssh');
 
 const dev = process.env.NODE_ENV !== 'production';
-const hostname = 'localhost';
-const port = 3005;
+const hostname = process.env.HOSTNAME || 'localhost';
+const port = parseInt(process.env.PORT || '3005', 10);
 
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();

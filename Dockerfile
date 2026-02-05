@@ -42,6 +42,10 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Copy custom server files for WebSSH support
+COPY --from=builder --chown=nextjs:nodejs /app/server.js ./
+COPY --from=builder --chown=nextjs:nodejs /app/server ./server
+
 USER nextjs
 
 EXPOSE 3000
