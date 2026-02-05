@@ -145,16 +145,6 @@ export default function TaskTable({ tasks, onTaskUpdate, onTaskAdd, onTaskDelete
     setEditProjectId(null);
   };
 
-  const getStatusLabel = (status: string) => {
-    const statusMap: { [key: string]: string } = {
-      'not_started': '未开始',
-      'in_progress': '进行中',
-      'completed': '已完成',
-      'abandoned': '已放弃',
-    };
-    return statusMap[status] || status;
-  };
-
   const getTaskNameColor = (status: string) => {
     const colorMap: { [key: string]: string } = {
       'not_started': 'text-blue-600',

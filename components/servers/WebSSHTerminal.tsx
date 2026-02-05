@@ -126,8 +126,14 @@ const WebSSHTerminal = forwardRef<WebSSHTerminalHandle, WebSSHTerminalProps>(({ 
       // 动态导入 socket.io-client
       const { io } = await import('socket.io-client');
 
-      // 在 Electron 环境中，需要明确指定服务器地址
-      const socket = io('http://localhost:3004', {
+      // 动态获取服务器地址
+      // 在浏览器环境中使用当前域名，在 Electron 环境中使用 localhost
+      const isElectron = typeof window !== 'undefined' && (window as any).electron;
+      const socketUrl = isElectron 
+        ? 'http://localhost:3005'  // Electron 环境
+        : window.location.origin;   // 浏览器环境，使用当前域名
+      
+      const socket = io(socketUrl, {
         path: '/socket.io',
         transports: ['websocket', 'polling'],
       });
